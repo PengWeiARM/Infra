@@ -1,3 +1,6 @@
+#if 0
+
+/****************************************/
 #include "uc1698.h"
 #include "Draw.h"
 #include "font.h"
@@ -273,4 +276,7 @@ s32 wPow(s32 data,u16 p)
 		}
 	}
 }
+
+#endif
+
 

@@ -18,6 +18,7 @@
 #define FLASHSECTORSIZE 0x1000   //4096
 
 
+/* W25Q64√¸¡Ó */
 typedef enum
 {
     flash_write_enable = 0x06,
@@ -75,4 +76,6 @@ extern void flashPowerOn(void);
 
 
 #endif
+
+
 

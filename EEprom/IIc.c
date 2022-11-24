@@ -20,6 +20,9 @@ void sTestIIC(void)
 	eepromRead(0xa0,0,20,(u16 *)RxTest);
 }
 
+/**
+ * @brief IIC?????SDA???SCL??
+ */
 void i2cStart(void)
 {
     SDA_OUT();
@@ -31,6 +34,9 @@ void i2cStart(void)
     pApp->pDelayUs(2);
     SCL_LOW();
 }
+/**
+ * @brief IIC?????SCL???SDA??
+ */
 void i2cStop(void)
 {
     SDA_OUT();
@@ -43,6 +49,7 @@ void i2cStop(void)
     SDA_HIGH(); 
 
 }
+
 bool_t i2cWaitAck(void)
 {
     u16 errtime = 255;
@@ -122,9 +129,12 @@ u8 i2cRecByte(void)
     while (i--)
     {
         ddata <<= 1;
-        SCL_LOW();pApp->pDelayUs(2);
-        SCL_HIGH();pApp->pDelayUs(2);
-		if(SDA)ddata |= 1;
+        SCL_LOW();
+        pApp->pDelayUs(2);
+        SCL_HIGH();
+        pApp->pDelayUs(2);
+        if (SDA)
+            ddata |= 1;
     }
     SCL_LOW();
     SDA_OUT();
