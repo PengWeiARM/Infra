@@ -64,6 +64,7 @@ typedef struct
 //******************************************************************************
 extern void flashInit(void);
 extern void flashRead(u32 addr, u16 len, u16 * data);
+extern void flashReadByte(u32 addr, u16 len, u8* data);
 extern void flashDirectProgram(u32 addr, u16 len, u16 * data);
 extern void flashDirectProgramWithCheck(u32 addr, u16 len, u16 * data);
 extern void flashErase(u32 sectorAddr);

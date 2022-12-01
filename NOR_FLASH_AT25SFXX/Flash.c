@@ -34,14 +34,13 @@ void sInitFlash(flashInit_t *pInit)
 
 /* flash读写 */
 u8 SPIx_ReadWriteByte(u8 TxData)
-{
+{  
     while(pApp->pIsSending());  //查发送缓冲器是否为空，空即可以发送
-    pApp->pSendData(TxData);	//发送一个字节
-//		sUartSendData(eExternComm, TxData);
+    pApp->pSendData(TxData); //发送一个字节
     //当SPI接收缓冲器为空时等待
     while(pApp->pIsReceiving());
-    return pApp->pReceiveData();
-}
+    return pApp->pReceiveData();        
+} 
 
 /*******************************************************************************
 * Function Name  :  spiDelayUs
@@ -60,10 +59,12 @@ void flashCsAssert(void)
 {
     pApp->pCsPinCtrl(LowLevel);
 }
+
 void flashCsDeAssert(void)
 {
     pApp->pCsPinCtrl(HighLevel);
 }
+
 
 
 /*******************************************************************************
@@ -74,7 +75,7 @@ void flashCsDeAssert(void)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-void flashWaitBusy(void)
+void flashWaitBusy1(void)
 {
     u32 i = 0;
     u16 data;
@@ -82,8 +83,8 @@ void flashWaitBusy(void)
     while(i++ < 100000)
     {
         flashCsAssert();
-//      	spiTxOneByte(flash_read_status_reg1);
-        SPIx_ReadWriteByte(flash_read_status_reg1);
+       										// spiTxOneByte(flash_read_status_reg1);
+		SPIx_ReadWriteByte(flash_read_status_reg1);
         data = 0;                                  
         data = SPIx_ReadWriteByte(0xff);		//spiRxOneByte();
         flashCsDeAssert();
@@ -99,14 +100,14 @@ void flashWaitBusy(void)
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
-void flashWaitBusy1(void)
+void flashWaitBusy(void)
 {
     u16 data;
     while(1)
     {
         flashCsAssert();
-// 				spiTxOneByte(flash_read_status_reg1);
-        SPIx_ReadWriteByte(flash_read_status_reg1);
+       										// spiTxOneByte(flash_read_status_reg1);
+		SPIx_ReadWriteByte(flash_read_status_reg1);
         data = 0;
         data = SPIx_ReadWriteByte(0xff);		//spiRxOneByte();
         flashCsDeAssert();
@@ -114,7 +115,7 @@ void flashWaitBusy1(void)
         {
             break;
         }
-        //pApp->pDelayPend();
+        pApp->pDelayPend();
     }
 }
 
@@ -128,11 +129,11 @@ void flashWaitBusy1(void)
 void flashChipErase(void)
 {
     flashCsAssert();
-    SPIx_ReadWriteByte(flash_write_enable);
+	SPIx_ReadWriteByte(flash_write_enable);
     flashCsDeAssert();
     spiDelayUs(5);	
     flashCsAssert();
-		SPIx_ReadWriteByte(flash_chip_erase);
+	SPIx_ReadWriteByte(flash_chip_erase);
     flashCsDeAssert();
     flashWaitBusy1();
 
@@ -159,14 +160,12 @@ void flashErase(u32 sectorAddr)
     flashWaitBusy();
 
 }
-
 /*******************************************************************************
 * Function Name  :  flashRead
 * Description    :  read data from flash
-* Input          :
-						addr: 	data address
-						len: 		length of 16-bit data
-						data: 	space for data to be stored.
+* Input          : addr: data address
+len:length of 16-bit data
+data: space for data to be stored.
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
@@ -182,11 +181,11 @@ void flashRead(u32 addr, u16 len, u16* data)
     {
         len -= realLen;
 
-				flashCsAssert();								//拉低片选，开始读取------test:ok
-				SPIx_ReadWriteByte(flash_read_data);
-				SPIx_ReadWriteByte((addr >> 16));
-				SPIx_ReadWriteByte((addr >> 8));
-				SPIx_ReadWriteByte(addr);
+        flashCsAssert();
+		SPIx_ReadWriteByte(flash_read_data);
+		SPIx_ReadWriteByte((addr >> 16));
+		SPIx_ReadWriteByte((addr >> 8));
+		SPIx_ReadWriteByte(addr);
 
         addr += realLen;
 
@@ -210,13 +209,51 @@ void flashRead(u32 addr, u16 len, u16* data)
     }
 }
 
+void flashReadByte(u32 addr, u16 len, u8* data)
+{
+    u16 realLen;
+
+    realLen = FLASHPAGESIZE - (addr & (FLASHPAGESIZE - 1));
+    if(realLen > len)realLen = len;
+
+    while(len > 0)
+    {
+        len -= realLen;
+        flashCsAssert();
+		SPIx_ReadWriteByte(flash_read_data);
+		SPIx_ReadWriteByte((addr >> 16));
+		SPIx_ReadWriteByte((addr >> 8));
+		SPIx_ReadWriteByte(addr);
+
+        addr += realLen;		
+        while(realLen)
+        {
+            *data = SPIx_ReadWriteByte(0xff);
+            data++;
+            realLen -= 1;
+        }
+        flashCsDeAssert();
+        
+        if(len > FLASHPAGESIZE)
+        {
+            realLen = FLASHPAGESIZE;
+        }
+        else
+        {
+            realLen = len;
+        }
+    }
+}
+
+
+
 /*******************************************************************************
 * Function Name  :  flashVerify
-* Description    :  从addr指定的地方读取len个字的数据，和data进行比较，看是否一致
-* Input          : 
-						addr:		flash data address
-						len:		length of 16-bit data
-						data: 	data given to be verified
+* Description    :  verify flash data with given data
+* Input          : addr:flash data address
+len:length of 16-bit data
+data: data given to be verified
+从addr指定的地方读取len个字的数据，和data进行比较，看是否一直
 * Output         : None.
 * Return         : 0:verify fail  1: verify OK.
 *******************************************************************************/
@@ -225,7 +262,7 @@ bool flashVerify(u32 addr, u16 len, u16* data)
     u16 tmp;
     while(len--)
     {
-        flashRead(addr, 1, &tmp);			
+        flashRead(addr, 1, &tmp);
         if(tmp != *data)
         {
             return FALSE;
@@ -238,11 +275,11 @@ bool flashVerify(u32 addr, u16 len, u16* data)
 
 /*******************************************************************************
 * Function Name  :  flashDirectProgram
-* Description    :  直接将数据写入flash，不经过擦除动作
-* Input          : 
-						addr: 	data address
-						len:		length of 16-bit data
-						data:  	data to be programmed.
+* Description    :  directly program data to flash. no erase operation needed.
+* Input          : addr: data address
+len:length of 16-bit data
+data:  data to be programmed.
+直接将数据写入flash，不经过擦除动作
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
@@ -259,20 +296,21 @@ void flashDirectProgram(u32 addr, u16 len, u16* data)
         len -= realLen;
 
         flashCsAssert();
-				SPIx_ReadWriteByte(flash_write_enable);
-				flashCsDeAssert();
-				spiDelayUs(5);		
-				flashCsAssert();	
-				SPIx_ReadWriteByte(flash_page_program);
-				SPIx_ReadWriteByte(addr >> 16);
-				SPIx_ReadWriteByte(addr >> 8);
-				SPIx_ReadWriteByte(addr);
+		SPIx_ReadWriteByte(flash_write_enable);
+		flashCsDeAssert();
+		spiDelayUs(5);		
+		flashCsAssert();	
+		SPIx_ReadWriteByte(flash_page_program);
+		SPIx_ReadWriteByte(addr >> 16);
+		SPIx_ReadWriteByte(addr >> 8);
+		SPIx_ReadWriteByte(addr);
+
 		
         addr += realLen;
         while(realLen)
         {
-						SPIx_ReadWriteByte(*data);
-						SPIx_ReadWriteByte(*data>>8);
+			SPIx_ReadWriteByte(*data);
+			SPIx_ReadWriteByte(*data>>8);
             data++;
             realLen -= 2;
         }
@@ -286,17 +324,20 @@ void flashDirectProgram(u32 addr, u16 len, u16* data)
         {
             realLen = len;
         }
+
+
     }
     
 }
-
 /*******************************************************************************
 * Function Name  :  flashDirectProgramWithCheck
-* Description    : 	直接将数据写入flash，不经过擦除；但是写入前，会检查将要接入的flash是否为空
-* Input          : 
-						addr: 	data address
-						len:		length of 16-bit data
-						data:  	data to be programmed.
+* Description    :  directly program data to flash. no erase operation needed.it is done only when 
+flash is blank
+* Input          : addr: data address
+len:length of 16-bit data
+data:  data to be programmed.
+直接将数据写入flash，不经过擦除
+但是写入前，会检查将要接入的flash是否为空
 * Output         : None.
 * Return         : None.
 *******************************************************************************/
@@ -317,10 +358,15 @@ void flashDirectProgramWithCheck(u32 addr, u16 len, u16* data)
 
 /*******************************************************************************
 * Function Name  :  flashProgramDataitem
-* Description    : 将数据写入指定的块sector，由于写入前需要进行擦除，为了防止掉电丢失数据
-									 增加一个缓存区 (swap，sector0)  作为临时数据存放点。缓存区的格式（按字描述）：
-		||word0							||word1,word2		 	||word3			|| word4...			||
-		||0x55AA 临时标志位	||数据要写入的地址	||数据长度		|| 要写入的数据	||
+* Description    :  program one dataitem to one sector.in our application, one dataitem occupies one sector,
+so their address always starts from 4k-aligned place.
+data firstly written to the swap sector, then written to specified sector
+将数据写入指定的块sector
+由于写入前需要进行擦除，为了防止掉电丢失数据
+增加一个缓存区 (swap，sector0)  作为临时数据存放点
+缓存区的格式( 按字描述)
+word0                                   || word1 ,word2                       ||word3              || word4...||
+0x55AA，临时标志位||数据要写入的地址||数据长度|| 要写入的数据||
 * Input          :
 * Output         : None.
 * Return         : None.
@@ -362,8 +408,6 @@ void flashProgramDataitem(u32 addr, u16 len, u32 SectorStartAddr, u32 SectorEndA
     tmp[0] = 0;
     flashDirectProgram(0, 1, tmp);
 }
-
-
 /*******************************************************************************
 * Function Name  :  flashReadUniqueId
 * Description    :  读取flash的uniqueID
@@ -376,11 +420,11 @@ void flashReadUniqueId(u16* data)
     u8 i = 0;
 
     flashCsAssert();
-		SPIx_ReadWriteByte(flash_read_unique_id_number);
-		SPIx_ReadWriteByte(0xFF);
-		SPIx_ReadWriteByte(0xFF);
-		SPIx_ReadWriteByte(0xFF);
-		SPIx_ReadWriteByte(0xFF);
+	SPIx_ReadWriteByte(flash_read_unique_id_number);
+	SPIx_ReadWriteByte(0xFF);
+	SPIx_ReadWriteByte(0xFF);
+	SPIx_ReadWriteByte(0xFF);
+	SPIx_ReadWriteByte(0xFF);
 	
     while(i++ < 4)
     {
@@ -400,6 +444,4 @@ void flashPowerOn(void)
     spiDelayUs(500);
     flashCsDeAssert();
 }
-
-
 

@@ -28,11 +28,29 @@ u32 OSGetTaskTimer(osThreadId ThreadId);
 void OSEventSend(osThreadId ThreadId, u32 event);
 void OSSendTimerEvent(void);
 u16 OSGetTaskNum(void);
+u16 OSGetUserTaskNum(void);
 u16 OSGetMaxTaskId(void);
 bool OSCheckEvent(TASK_EVENT Group, u32 event);
 
 
 #endif
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
