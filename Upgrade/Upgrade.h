@@ -45,6 +45,7 @@ enum
     cBinFilePropChk,
     cWrBinData,
     cArmEnterBootloader,
+    eBurnDsp,
 };
 
 enum 
@@ -58,6 +59,8 @@ enum
     cBinDataWrOK,
     cBinDataWrError,
     cArmEnterBootOK,
+    cShutDownOk,
+    cShutDownFail,
 };
 
 typedef enum 
@@ -75,6 +78,10 @@ typedef enum
     cZonFwErasing,
     cZonFwWriting,
     cZonAppCheck,
+    cZonBinHeaderCheck,
+    cZonBinAppCheck,
+    cZonBinFwMatchCheck,
+    cZonEnterBoot,
 }UpgradeZonFwState_t;
 
 typedef enum
@@ -88,6 +95,10 @@ typedef enum
     cZonAppCheckFail,
     cZonEnterAppFail,
     cZonSetOkFlagFail,
+    cZonEnterBootFail,
+    cZonEraseCmdNack,
+    
+    
 }UpgradeZonFwErrorCode_t;
 
 
