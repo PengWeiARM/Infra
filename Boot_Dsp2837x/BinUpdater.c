@@ -12,7 +12,7 @@
 #include "FwDownloaderSci.h"
 #include "BootProxy.h"
 #include "ProtocolData.h"
-
+#include "BootBasicApi.h"
 //###########################################################################
 eUpdateFsm_t           em_UpdateFsm;
 unionCANopenMsg_t      uniCANOpenMsg;
@@ -31,6 +31,9 @@ void 									*pu8Data   = 0;
 strBinUpdateFuncApi_t  gstrBinUpdateFuncApi;
 
 bool_ta               bom_IsUpgradeSessionResultSuccess = false;
+int32_ta							s32BinCntTimer = 1000;
+
+#define mpBinTimer   (&s32BinCntTimer)
 //###########################################################################
 __pDataReceived       pDataRecFunc = 0;
 __DownloadStart       pDownloadStartFunc = 0; 
@@ -98,7 +101,7 @@ void voBinUpdate_StartSession() {
         em_UpdateFsm = eUpdateFSM_SetReset;  /// will goto CMD_Stayinboot in FSM()
 		}
 }
-
+//#define mpBinTimer   (&s32BinCntTimer)
 void voBinUpdate_FSM() {
 	
 		switch(em_UpdateFsm) {
@@ -107,27 +110,24 @@ void voBinUpdate_FSM() {
 				break;
 			
 			case eUpdateFSM_SetReset:
-				//if(IsTargetTimout()) {
-			  if(1) {
-					//SetTimeoutTarget(1*1000);
+				if(boIsTargetTimout(mpBinTimer)) {
+					voSetTimeoutTarget(mpBinTimer,1*1000);
 					voSendOutCANOpenCmd_Reset();
 					em_UpdateFsm = eUpdateFsm_StatyInboot;
 				}
 				break;
 			
 			case eUpdateFsm_StatyInboot:
-				//if(IsTargetTimout()) {
-			  if(1) {
-					//SetTimeoutTarget(1*1000);
+				if(boIsTargetTimout(mpBinTimer)) {
+					voSetTimeoutTarget(mpBinTimer,1*1000);
 					voSendOutCANOpenCmd_StayInBOOT(true);
 					em_UpdateFsm = eUpdateFsm_Start;
 				}
 				break;
 			
 			case eUpdateFsm_Start:
-				//if(IsTargetTimout()) {
-			  if(1) {
-					//SetTimeoutTarget(1*1000);
+				if(boIsTargetTimout(mpBinTimer)) {
+					voSetTimeoutTarget(mpBinTimer,1*1000);
 					if((pDownloadStartFunc) &&(pu8Data) ) {
 					  pDownloadStartFunc(u16BoardId,u16device,u16ordinal,u16encryption,pu8Data);
 					}
@@ -137,14 +137,11 @@ void voBinUpdate_FSM() {
 						
 			
 			case eUpdateFsm_DataTransfer:
-				//if(IsTargetTimout()) {
-			  if(1) {
-				}
+				if(boIsTargetTimout(mpBinTimer)) { }
 				break;
 			
 			case eUpdateFsm_TranferFinsh:
-				//if(IsTargetTimout()) {
-			  if(1) {
+				if(boIsTargetTimout(mpBinTimer)) {
 					  if(u16updateLeaveBootMsgCnt++ < 3) {
                 voSendOutCANOpenCmd_StayInBOOT(false);
                 em_UpdateFsm = eUpdateFsm_TranferFinsh;
@@ -156,8 +153,7 @@ void voBinUpdate_FSM() {
 				break;
 			
 			case eUpdateFsm_ErrToCreateSession:
-				//if(IsTargetTimout()) {
-			  if(1) {
+				if(boIsTargetTimout(mpBinTimer)) {
 					em_UpdateFsm = eUpdateFsm_Standby;
 				}
 				break;	

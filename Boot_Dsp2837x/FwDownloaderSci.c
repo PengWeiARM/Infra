@@ -9,8 +9,10 @@
 // Include
 //###########################################################################
 #include "FwDownloaderSci.h"
-
-
+#include "BootBasicApi.h"
+// #########################################################################
+#define mParseBufSize   8
+#define mvoParseDATA(x) {voParseData(&x);}
 //###########################################################################
 eDownloadState_t  eDownloadSci_State = STATE_IDLE;
 uint32_ta         u32m_DataTranferTotoal_RetryCnt = 0;
@@ -34,6 +36,11 @@ uint32_ta         u32m_UpdatedBinFileSize_ByByte = 0;
 uint32_ta         u32m_TransferResponseIterator = 0;
 
 strBinUpdateFuncApi_t*  pstrBinUpdateFuncApi =  mNULL_ta;//&gstrBinUpdateFuncApi;
+
+int32_ta				     	  s32SciDownloadCntTimer = 1000;
+#define mpSciDnldTimer  &s32SciDownloadCntTimer
+uint8_ta                u8ParseDataBuf[mParseBufSize+2] = {0};
+uint8_ta                u8ParseDatabufIndex = 0;
 //###########################################################################
 void voSci_RequestIdentification();
 void voSci_InitiateUpgrade();
@@ -47,10 +54,18 @@ void voSci_DataTransferPut(uint8_ta data);
 void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, uint8_ta data[]);
 void voDownloadMsgRsp_OnTimeout() ;
 
-void voStartTimerMs(int32_ta interval);
-void voStopTimer();	
+void voPrepare_ParseData();
+//void voStartTimerMs(int32_ta interval);
+//void voStopTimer();	
 //###########################################################################
-
+void voPrepare_ParseData(uint8_ta *p) {
+	uint8_ta  i = 0;
+	u8ParseDatabufIndex = 0;
+	
+	for(i=0;i<mParseBufSize;i++) {
+		u8ParseDataBuf[i] = *(p++);
+	}
+}
 //###########################################################################
 //Functions  : voSci_DownloadStart
 //Discription: Start to downloa
@@ -93,13 +108,13 @@ uint32_ta GetDataRetryCnt()
 //###########################################################################
 void voSci_RequestIdentification() {
 	  eDownloadSci_State = STATE_WAITING_FOR_IDENTIFICATION_RESPONSE;
-    //StartTimerMs(500);                                               /// 100
+    voStartTimerMs(mpSciDnldTimer,500);                                               /// 100
     pstrBinUpdateFuncApi->pFuncRequestIdentification(u16m_node_id);
 }
 
 void voSci_InitiateUpgrade(){
 	 eDownloadSci_State = STATE_WAITING_FOR_INITUPDATE_RESPONSE;
-   //StartTimerMs(1*1000);
+   voStartTimerMs(mpSciDnldTimer,1*1000);   
    pstrBinUpdateFuncApi->pFuncInitUpgrade(u16m_node_id);
 }
 
@@ -128,21 +143,13 @@ void voSci_DataTransferPut(uint8_ta data) {
 	  pstrBinUpdateFuncApi->pFuncDataTranferPut(data);
 }
 
-void voStartTimerMs(int32_ta interval)
-{
-    //interval = interval;
-    //SetTimeoutTarget(interval);
-}
-
-void voStopTimer()
-{
-     //m_TimeoutTarget = m_TimeoutCnt;
-}
 //###########################################################################
 // Functions  : voParseData
 // Discription: to parse the data recieved
 //###########################################################################
-void voParseData() {
+void voParseData(uint8_ta* pdata) {
+	*pdata = u8ParseDataBuf[u8ParseDatabufIndex];
+	u8ParseDatabufIndex++;
 }
 
 void voSci_ToDoDataTranferX(eDownloadResult_t result) {
@@ -163,7 +170,7 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
     if ( (canIdentifier & CAN_NODE_ID_MASK) != u16m_node_id )     {
         result = RESULT_UNEXPECTED_RESPONSE;
     }
-
+    voPrepare_ParseData(data);
     if (RESULT_CONTINUE == result) {
         switch (eDownloadSci_State)  {
 					case STATE_IDLE: 
@@ -171,22 +178,21 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 						break;
 
 					case STATE_WAITING_FOR_IDENTIFICATION_RESPONSE: 
-						voStopTimer();
+						voStopTimer(mpSciDnldTimer);
 						u16m_InitgradeRedoCnt = 0;
 						result = RESULT_START_UPGRADE;
 						break;
 
 					case STATE_WAITING_FOR_INITUPDATE_RESPONSE: 
-						voStopTimer();
-						voParseData();
-					  u8Data = 0;  // 1st is cmd
+						voStopTimer(mpSciDnldTimer);
+						mvoParseDATA(u8Data); // 1st is cmd
 					  if(u8Data != BOOTMSG_REQUEST_INITIATE_UPGRADE ) {
 							if(u16m_InitgradeRedoCnt++ > 5) {
 								result = RESULT_UNEXPECTED_RESPONSE;
 								break;
 							}
 						}
-						u8Data = 0;  // 2nd is window_size
+						mvoParseDATA(u8Data);  // 2nd is window_size
 						if(u8Data ==0 ) {
 								result = RESULT_UPGRADE_RESPONSE_INVALID_WINDOW_SIZE;
 								break;
@@ -196,7 +202,7 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 						eDownloadSci_State = STATE_WAITING_FOR_DATATRANSFER_RESPONSE;
 						
 						// the third byte of the message contains the status
-						u8Data = 0; //ss.get( c );
+						mvoParseDATA(u8Data); //ss.get( c );
 						switch (u8Data)  {
 								case BOOTMSG_UPGRADE_STAT_OK:             { } break;   // nothing, it is ok
 								case BOOTMSG_UPGRADE_STAT_TOO_BIG:        { result = RESULT_UPGRADE_RESPONSE_SIZE_TOO_BIG;    } break;
@@ -210,9 +216,8 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 						break;
 
 					case STATE_WAITING_FOR_DATATRANSFER_RESPONSE:  
-						voStopTimer();
-						voParseData();
-						u8Data = 0; //ss.get( c );
+						voStopTimer(mpSciDnldTimer);
+						mvoParseDATA(u8Data); //ss.get( c );
 						if( u8Data != BOOTMSG_REQUEST_DATA_TRANSFER )  {
 							result = RESULT_UNEXPECTED_RESPONSE;
 							if(u8Data == BOOTMSG_REQUEST_DATA_TRANSFER_FINISH) {
@@ -227,7 +232,7 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 								}
 							}
 						} else {   // 1. if( u8Data != BOOTMSG_REQUEST_DATA_TRANSFER ) 
-								u8Data = 0; //ss.get( c );	
+								mvoParseDATA(u8Data); //ss.get( c );	
 								if( (u8Data+1) == u8m_SequenceNumber_Sci )  {
 									u32m_TransferResponseIterator++;
 									u32m_NumberOfOutOfSyncRetries = 0;
@@ -247,13 +252,12 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 						break;
 
 					case STATE_WAITING_FOR_DATATRANSFER_FINISH_RESPONSE: 
-							voStopTimer();
-							voParseData(); // CanRead( ss, length, data );
-							u8Data = 0; //ss.get( c );
+							voStopTimer(mpSciDnldTimer);
+							mvoParseDATA(u8Data); // CanRead( ss, length, data );
 							if( u8Data != BOOTMSG_REQUEST_DATA_TRANSFER_FINISH )    {
 									result = RESULT_UNEXPECTED_RESPONSE;
 							}  else  {
-									u8Data = 0;  // ss.get( c );
+									mvoParseDATA(u8Data);  // ss.get( c );
 									switch (u8Data)       {
 											case BOOTMSG_DATA_TRANSFER_FINISH_SUCCESS:              result = RESULT_DONE; break;
 											case BOOTMSG_DATA_TRANSFER_FINISH_IMAGE_ERROR:          result = RESULT_UPGRADE_RESPONSE_IMAGE_ERROR; break;
@@ -285,14 +289,14 @@ void voDownloadMsgRsp_OnTimeout()
        uint16_ta  u32timeoutMaxRetries = 50;
        uint8_ta   u8SeqNo_Old;
 
-//    if(! IsTargetTimout()) {
-//        return;
-//    }
+    if(! boIsTargetTimout(mpSciDnldTimer)) {
+        return;
+    }
     if(STATE_WAITING_FOR_DATATRANSFER_RESPONSE == eDownloadSci_State) {
-       //SetTimeoutTarget(1000);
+       voSetTimeoutTarget(mpSciDnldTimer,1000);
     }
     else {
-       //SetTimeoutTarget(2000);
+       voSetTimeoutTarget(mpSciDnldTimer,2000);
     }
     switch (eDownloadSci_State)
     {

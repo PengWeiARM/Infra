@@ -1,40 +1,27 @@
-#ifndef _BIN_UPDATE_H__
-#define _BIN_UPDATE_H__
+#ifndef  _BOOT_BASIC_API_H__
+#define  _BOOT_BASIC_API_H__
 // ##########################################################################################
 #include "AppDataType.h"
 #include "CANOpenSystem.h"
 #include "IFwDownloader.h"
 #include "ProtocolType.h"
 #include "BootProtocol.h"
-#include "DataStruct.h"
 // ##########################################################################################
 #ifdef __cplusplus
 extern "C" {
 #endif
 // ##########################################################################################
-typedef enum {
-    eUpdateFSM_Init,
-    eUpdateFSM_SetReset,
-    eUpdateFsm_StatyInboot,
-    eUpdateFsm_Start,
-    eUpdateFsm_DataTransfer,
-    eUpdateFsm_TranferFinsh,
-    eUpdateFsm_Standby,
-    eUpdateFsm_ErrToCreateSession,
-}eUpdateFsm_t;
 
 
 
 // ##########################################################################################
-void svoBinUpdate_Init(); 
-void voBinUpdate_FSM();
-void voBinUpdate_StartSession();
+void    voTimeoutByStep();
+void    voSetTimeoutTarget(int32_ta* pTimer,int32_ta ms);
+bool_ta boIsTargetTimout(int32_ta* pTimer);
+void    voStopTimer(int32_ta* pTimer);
+void     voStartTimerMs(int32_ta* pTimer,int32_ta ms);
 
-
-
-
-
-
+// ##########################################################################################
 
 
 
@@ -42,5 +29,6 @@ void voBinUpdate_StartSession();
 #ifdef __cplusplus
 }
 #endif
+
 // ##########################################################################################
-#endif // _BIN_UPDATE_H__
+#endif // _BOOT_BASIC_API_H__
