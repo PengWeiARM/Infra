@@ -11,14 +11,14 @@
 extern "C" {
 #endif
 // ##########################################################################################
-void voSendOutCANOpenCmd_Reset();
+void voSendOutCANOpenCmd_Reset(void);
 void voSendOutCANOpenCmd_StayInBOOT(bool_ta isStay);
 void voSendOutCANOpenCmd_InitiateUpgrade(uint16_ta nodeId);
 void voSendOutCANOpenCmd_RequestIdentification(uint16_ta nodeId);
 void voSendOutCANOpenCmd_DataTranfer_XXL(uint16_ta nodeId,uint16_ta SeqNo,bool_ta isEnd);
 void voSendOutCANOpenCmd_StartWriteIn(uint16_ta len); 
 void voSendOutCANOpenCmd_DataTranferPut(uint8_ta data);
-void voSendOutCANOpenCmd_ResetRxBuf();
+void voSendOutCANOpenCmd_ResetRxBuf(void);
 // ##########################################################################################
 #ifdef __cplusplus
 }

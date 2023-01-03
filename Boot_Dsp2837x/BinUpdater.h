@@ -26,9 +26,9 @@ typedef enum {
 
 
 // ##########################################################################################
-void svoBinUpdate_Init(); 
-void voBinUpdate_FSM();
-void voBinUpdate_StartSession();
+void svoBinUpdate_Init(void); 
+void voBinUpdate_FSM(void);
+void voBinUpdate_StartSession(void);
 
 
 

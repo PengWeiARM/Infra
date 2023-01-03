@@ -365,7 +365,7 @@ data firstly written to the swap sector, then written to specified sector
 由于写入前需要进行擦除，为了防止掉电丢失数据
 增加一个缓存区 (swap，sector0)  作为临时数据存放点
 缓存区的格式( 按字描述)
-word0                                   || word1 ,word2                       ||word3              || word4...||
+word0            || word1 ,word2  ||word3  || word4...   ||
 0x55AA，临时标志位||数据要写入的地址||数据长度|| 要写入的数据||
 * Input          :
 * Output         : None.
