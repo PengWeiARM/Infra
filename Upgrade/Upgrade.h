@@ -205,6 +205,8 @@ bool sFileCheckIsOk(void);
 bool sFilePropCheckIsOk(void);
 void sMarkTransferFile(s32 time);
 bool sIsTransferringFile(void);
+bool sIsRdBinFileAppDataOk(u32 addr, u32 len, u8 **pBuff);
+bool sIsRdBinFileHeadDataOk(u32 addr, u32 len, u8 **pBuff);
 bool IsReqUpgrade(void);
 void sSetReqUpgrade(void);
 void sResetReqUpgrade(void);
@@ -226,6 +228,8 @@ bool sIsChipAppCheckOk(void);
 void sSetAppOkFlag(void);
 void sClrAppOkFlag(void);
 bool IsAppOK(void);
+bool IsCheckAppOkFlagClrOk(void);
+void sClrCheckAppOkFlag(void);
 bool sJumptoApplication(u32 AppAddr);
 bool sIsNeedCheckAppOk(void);
 
