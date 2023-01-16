@@ -12,6 +12,9 @@
 extern "C" {
 #endif
 // ##########################################################################################
+#define mDSP_PROGPAGESIZE 32
+
+
 typedef enum {
     eUpdateFSM_Init,
     eUpdateFSM_SetReset,
@@ -24,20 +27,23 @@ typedef enum {
 }eUpdateFsm_t;
 
 
-
+extern unionCANopenMsg_t      uniCANOpenMsg;
 // ##########################################################################################
-void svoBinUpdate_Init(void); 
-void voBinUpdate_FSM(void);
-void voBinUpdate_StartSession(void);
+void svoBinUpdate_Init(); 
+void voBinUpdate_FSM();
+void voBinUpdate_StartSession();
 
+void svoGetTargetChipAddr(uint8_ta* pAddr);
+void svoGetSrcChipAddr(uint8_ta* pAddr);
 
-
-
-
-
-
-
-
+uint16_ta u16GetNodeId();
+uint16_ta u16GetBoardId();
+uint16_ta u16GetOrdinityID();
+uint16_ta u16GetEncryptFlag();
+uint16_ta u16GetDeviceId();
+bool_ta boIsSessionFinished(void);
+void voResetSessionEndFlag(void);
+void      voGetBinFileSizeInByte(uint32_ta* pu32Size);
 // ##########################################################################################
 #ifdef __cplusplus
 }

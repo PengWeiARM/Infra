@@ -9,7 +9,7 @@ void    voSetTimeoutTarget(int32_ta* pTimer,int32_ta ms);
 bool_ta boIsTargetTimout(int32_ta* pTimer);
 void    voStopTimer(int32_ta* pTimer);
 // ##########################################################################################
-int32_ta s32TimeIntervalSet = 10;
+int32_ta s32TimeIntervalSet = mBinUpdateInterval;  // 10
 int32_ta s32BootTimerCntTick = 0;
 // ##########################################################################################
 //
@@ -36,12 +36,12 @@ void  voStartTimerMs(int32_ta* pTimer,int32_ta ms) {
 
 
 bool_ta boIsTargetTimout(int32_ta* pTimer) {
-   return (*pTimer > s32TimeIntervalSet);
+		return ( s32BootTimerCntTick > *pTimer);
 }
 
 
 void voStopTimer(int32_ta* pTimer)
 {
-     *pTimer = s32BootTimerCntTick;
+     *pTimer = s32BootTimerCntTick+5;
 }
 

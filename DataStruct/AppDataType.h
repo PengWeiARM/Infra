@@ -27,11 +27,11 @@
 typedef unsigned long long  uint64_ta;
 typedef   signed long long  int64_ta;
 
-typedef unsigned long   uint32_ta;
-typedef signed   long   int32_ta;
+typedef unsigned int        uint32_ta;
+typedef signed   int        int32_ta;
 
-typedef unsigned int    uint16_ta;
-typedef signed   int    int16_ta;
+typedef unsigned short int  uint16_ta;
+typedef signed   short int  int16_ta;
 
 typedef unsigned char   uint8_ta;
 typedef signed   char   int8_ta;

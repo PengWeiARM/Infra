@@ -207,6 +207,7 @@ void sMarkTransferFile(s32 time);
 bool sIsTransferringFile(void);
 bool sIsRdBinFileAppDataOk(u32 addr, u32 len, u8 **pBuff);
 bool sIsRdBinFileHeadDataOk(u32 addr, u32 len, u8 **pBuff);
+bool sIsRdBinFileDataOk(u32 addr, u32 len, u8 **pBuff);
 bool IsReqUpgrade(void);
 void sSetReqUpgrade(void);
 void sResetReqUpgrade(void);
