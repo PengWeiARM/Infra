@@ -1,5 +1,3 @@
-#if 0
-/********************************LCDœ‡πÿ********************************/
 /*
  * Draw.h
  *
@@ -43,6 +41,3 @@ void RainDisp(int x,int y);
 void SunDisp(int x,int y);
 s32 wPow(s32 data,u16 p);
 #endif /* DRAW_H_ */
-
-
-#endif

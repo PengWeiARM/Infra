@@ -2,7 +2,7 @@
 
 s16 sStrCopy(char *pSor,char *pDim)
 {
-	int wLen=0;
+	s16 wLen=0;
 	while(*pSor!=0)
 	{
 		*pDim++ = *pSor++;
@@ -17,9 +17,9 @@ s16 sStrCopy(char *pSor,char *pDim)
 	return wLen;
 }
 
-int	swGetStrLen(char *bStr)
+s16	swGetStrLen(char *bStr)
 {
-	int wLen=0;
+	s16 wLen=0;
 	while(*bStr++!=0)
 	{
 		wLen++;
@@ -32,21 +32,21 @@ int	swGetStrLen(char *bStr)
 
 }
 
-void ToxAsc(int wData,char *bStr)
+void ToxAsc(s16 wData,char *bStr)
 {
 	*bStr++ = (wData)+'0';
 	*bStr++ = 0;
 }
 
 
-void ToxxAsc(int wData,char *bStr)
+void ToxxAsc(s16 wData,char *bStr)
 {
 	*bStr++ = (wData/10)+'0';
 	*bStr++ = (wData%10)+'0';
 	*bStr++ = 0;
 }
 
-void ToxxxAsc(int wData,char *bStr)
+void ToxxxAsc(s16 wData,char *bStr)
 {
 	*bStr++ = (wData/100)+'0';
 	wData%=100;
@@ -54,7 +54,7 @@ void ToxxxAsc(int wData,char *bStr)
 	*bStr++ = (wData%10)+'0';
 	*bStr++ = 0;
 }
-void ToxxxxAsc(int wData,char *bStr)
+void ToxxxxAsc(s16 wData,char *bStr)
 {
 	*bStr++ = (wData/1000)+'0';
 	wData%=1000;
@@ -108,9 +108,9 @@ void ToxxxxxxxAsc(long wData,char *bStr)
 	*bStr++ = (wData%10)+'0';
 	*bStr++ = 0;
 }
-int HexToAsc(long wData,char *bStr)
+s16 HexToAsc(long wData,char *bStr)
 {
-	int wSign=0;
+	s16 wSign=0;
 	if(wData<0)
 	{
 		wSign = 1;
@@ -152,12 +152,12 @@ int HexToAsc(long wData,char *bStr)
 	return 1+wSign;
 }
 
-int HexToStr(long wData,char *bStr,int wDot)
+s16 HexToStr(long wData,char *bStr,int wDot)
 {  
-   int bitIndex;
-   int bit;
-   int wLen;
-   int wSign;	 
+   s16 bitIndex;
+   s16 bit;
+   s16 wLen;
+   s16 wSign;	 
    char *pDataTemp;
    char *pStrTemp;
    char DataTemp[10];
@@ -226,8 +226,8 @@ int HexToStr(long wData,char *bStr,int wDot)
 }	
 
 #define N 30
-int sStrcmp(char* p1, char* p2) {
-	for (int i = 0; i < N; ++i) {
+s16 sStrcmp(char* p1, char* p2) {
+	for (s16 i = 0; i < N; ++i) {
 		if (p1[i] != p2[i]) {
 			return p1[i] - p2[i];
 		}
@@ -237,5 +237,7 @@ int sStrcmp(char* p1, char* p2) {
 	}
 	return 0;
 }
+
+
 
 

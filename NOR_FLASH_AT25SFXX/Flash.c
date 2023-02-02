@@ -13,22 +13,17 @@
 #define FLASH_GLOBLS
 
 #include "Flash.h"
-#include "FlashApp.h"
-#include "main.h"
+
+
 
 static flashInit_t *pApp;
-
-void Message_Trans(int word);
-
 
 
 void sInitFlash(flashInit_t *pInit)
 {
     pApp = pInit;
-#if 0			//SPI:WP、HOLD无硬件连接
     pApp->pHoldPinCtrl(HighLevel);
     pApp->pWpPinCtrl(HighLevel);
-#endif
 }
 
 

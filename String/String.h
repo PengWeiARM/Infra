@@ -3,13 +3,13 @@
 #include "typedef.h"
 
 s16 sStrCopy(char *pSor,char *pDim);
-int	swGetStrLen(char *bStr);
-void ToxAsc(int wData,char *bStr);
-void ToxxAsc(int wData,char *bStr);
-void ToxxxAsc(int wData,char *bStr);
-void ToxxxxAsc(int wData,char *bStr);
-
-int HexToStr(long wData,char *bStr,int wDot);
-int sStrcmp(char* p1, char* p2);
+s16	swGetStrLen(char *bStr);
+void ToxAsc(s16 wData,char *bStr);
+void ToxxAsc(s16 wData,char *bStr);
+void ToxxxAsc(s16 wData,char *bStr);
+void ToxxxxAsc(s16 wData,char *bStr);
+s16 HexToAsc(long wData,char *bStr);
+s16 HexToStr(long wData,char *bStr,int wDot);
+s16 sStrcmp(char* p1, char* p2);
 
 #endif
