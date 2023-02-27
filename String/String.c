@@ -108,6 +108,34 @@ void ToxxxxxxxAsc(long wData,char *bStr)
 	*bStr++ = (wData%10)+'0';
 	*bStr++ = 0;
 }
+
+void ToHexAsc(u8 data, char *bStr, LetterType_t Type)
+{
+    if(data < 10)
+    {
+        *bStr = (data)+'0';
+    }
+    else if(data < 16)
+    {
+        if(Type == eCapital)
+        {
+            *bStr = (data-10)+'A';
+        }
+        else if(Type == elowercase)
+        {
+            *bStr = (data-10)+'a';
+        }
+        else
+        {
+            *bStr = 0;
+        }
+    }
+    else
+    {
+        *bStr = 0;
+    }
+}
+
 s16 HexToAsc(long wData,char *bStr)
 {
 	s16 wSign=0;

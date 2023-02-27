@@ -81,7 +81,7 @@ void sReadkey(void)	   //1ms
 			if(wLongPress[1]++>	15*cKeyFilter)
 			{
 			   wLongPress[1] = 0;
-               pApp->pSendKeyEvent(eKeyUp);
+               pApp->pSendKeyEvent(eKeyUpLong);
 			}
 		}
 	}
@@ -109,7 +109,7 @@ void sReadkey(void)	   //1ms
 			if(wLongPress[2]++>	15*cKeyFilter)
 			{
 			   wLongPress[2] = 0;
-               pApp->pSendKeyEvent(eKeyDown);
+               pApp->pSendKeyEvent(eKeyDownLong);
 			}
 		}
 	}

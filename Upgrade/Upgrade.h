@@ -216,6 +216,7 @@ void sSetRemoteRunLevel(u16 Level);
 void sSetRemoteBurnState(u16 state);
 void sSetRemoteBurnProgress(u16 progress);
 void sSetRemoteBurnErrorCode(u16 errorCode);
+void sRestart(void);
 void sEnterBootloader(void);
 void sSetUserUpgarde(void);
 void sResetUserUpgrade(void);

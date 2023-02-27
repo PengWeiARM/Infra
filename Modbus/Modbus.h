@@ -43,6 +43,8 @@
 typedef enum{
     eInvalidDataAddr,
 	eInvalidDataValue,
+	eInvalidLen,
+	eNack,
 	eNoError,
 }rwErrorType_t;
 
@@ -62,6 +64,14 @@ typedef enum{
 #define P03R_10W  ((1<<e03Read)|(1<<eMultiWrite))
 #define PXXR_06W  (1<<eSingleWrite)
 #define PXXR_10W  (1<<eMultiWrite)
+
+#define cMaxUInt16  (s16)65535
+#define cMinUInt16  (s16)0
+
+#define cMaxInt16  32767
+#define cMinInt16  -32768
+
+
 
 
 
@@ -159,6 +169,8 @@ extern void sModbusSendData(void);
 extern void sModbusEnableReceive(void);
 extern bool sModbusIsSendEnd(void);
 extern void sChkModbusComm(void);
+extern u16 sCalCrc(u8 *pData,u16 Lenghth);
+
 
 #endif
 
