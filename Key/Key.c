@@ -75,9 +75,9 @@ void sReadkey(void)	   //1ms
 			}
 		}
 		RstLed();
-		if(wKeyCnt[1] > 20*cKeyFilter)
+		if(wKeyCnt[1] > 40*cKeyFilter)
 		{
-			wKeyCnt[1] = 20*cKeyFilter;
+			wKeyCnt[1] = 40*cKeyFilter;
 			if(wLongPress[1]++>	15*cKeyFilter)
 			{
 			   wLongPress[1] = 0;
@@ -103,9 +103,9 @@ void sReadkey(void)	   //1ms
 
 		RstLed();
 
-		if(wKeyCnt[2] > 20*cKeyFilter)
+		if(wKeyCnt[2] > 40*cKeyFilter)
 		{
-			wKeyCnt[2] = 20*cKeyFilter;
+			wKeyCnt[2] = 40*cKeyFilter;
 			if(wLongPress[2]++>	15*cKeyFilter)
 			{
 			   wLongPress[2] = 0;
@@ -129,9 +129,9 @@ void sReadkey(void)	   //1ms
                 pApp->pSendKeyEvent(eKeyEsc);
 			}
 		}
-		if(wKeyCnt[3] > 20*cKeyFilter)
+		if(wKeyCnt[3] > 40*cKeyFilter)
 		{
-			wKeyCnt[3] = 20*cKeyFilter;
+			wKeyCnt[3] = 40*cKeyFilter;
 			if(wLongPress[3]++>	15*cKeyFilter)
 			{
 			   wLongPress[3] = 0;
