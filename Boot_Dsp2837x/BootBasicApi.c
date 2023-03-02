@@ -4,44 +4,56 @@
 
 
 // ##########################################################################################
-void    voTimeoutByStep();
-void    voSetTimeoutTarget(int32_ta* pTimer,int32_ta ms);
-bool_ta boIsTargetTimout(int32_ta* pTimer);
-void    voStopTimer(int32_ta* pTimer);
+void    voTimerTick       (int32_ta* p32tick, bool_ta*  pstate);
+void    voSetTimeoutTarget(int32_ta* pTimer , int32_ta* p32tick,int32_ta ms);
+bool_ta boIsTargetTimout  (int32_ta* pTimer,int32_ta* p32tick);
+void    voStopTimer       (int32_ta* pTimer,int32_ta* p32tick,bool_ta* pstate);
 // ##########################################################################################
 int32_ta s32TimeIntervalSet = mBinUpdateInterval;  // 10
 int32_ta s32BootTimerCntTick = 0;
+bool_ta  boTimerRunState = false;
 // ##########################################################################################
 //
 //
 //
 // ##########################################################################################
-void voTimeoutByStep()
+void voTimeIntervalSet(int32_ta interval) {
+	s32TimeIntervalSet = interval;
+}
+
+void voTimerTick(int32_ta* p32tick,bool_ta* pstate)
 {
-    s32BootTimerCntTick++;
+	  if(*pstate) {
+			(*p32tick)= (*p32tick) + 1;
+		} else {
+			*p32tick = 0;
+		}
 }
 
 
-void  voSetTimeoutTarget(int32_ta* pTimer,int32_ta ms) {
+void  voSetTimeoutTarget(int32_ta* pTimer,int32_ta* p32tick,int32_ta ms) {
 	  int cnt = ms/(s32TimeIntervalSet);
     if(cnt == 0) {
         cnt = 1;
     }
-    *pTimer = s32BootTimerCntTick + cnt;
+    *pTimer = (*p32tick) + cnt;
 }
 
-void  voStartTimerMs(int32_ta* pTimer,int32_ta ms) {
-	voSetTimeoutTarget(pTimer,ms);
-}
-
-
-bool_ta boIsTargetTimout(int32_ta* pTimer) {
-		return ( s32BootTimerCntTick > *pTimer);
+void  voStartTimerMs(int32_ta* pTimer,int32_ta* p32tick,bool_ta* pstate, int32_ta ms) {
+	voSetTimeoutTarget(pTimer,p32tick,ms);
+	*pstate = true;
 }
 
 
-void voStopTimer(int32_ta* pTimer)
+bool_ta boIsTargetTimout(int32_ta* pTimer,int32_ta* p32tick) {
+		return ( (*p32tick) > (*pTimer));
+}
+
+
+void voStopTimer(int32_ta* pTimer,int32_ta* p32tick,bool_ta* pstate)
 {
-     *pTimer = s32BootTimerCntTick+5;
+	   *pstate  = false;
+	   *p32tick = 0;
+     *pTimer  = *p32tick+5;
 }
 

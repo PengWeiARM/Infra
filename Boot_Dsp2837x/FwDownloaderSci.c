@@ -37,8 +37,14 @@ uint32_ta         u32m_TransferResponseIterator = 0;
 
 strBinUpdateFuncApi_t*  pstrBinUpdateFuncApi =  mNULL_ta;//&gstrBinUpdateFuncApi;
 
-int32_ta				     	  s32SciDownloadCntTimer = 1000;
+int32_ta				     	  s32SciDownloadCntTimer  = 1000;
+int32_ta				     	  s32SciDownloadTimerTick = 0;
+bool_ta                 boSciDownloadTimerState = 0;
+
 #define mpSciDnldTimer  &s32SciDownloadCntTimer
+#define mpSciDnldTick   &s32SciDownloadTimerTick
+#define mpSciDnldState   &boSciDownloadTimerState
+
 uint8_ta                u8ParseDataBuf[mParseBufSize+2] = {0};
 uint8_ta                u8ParseDatabufIndex = 0;
 uint8_ta                u8ArrayBinFile_Test[965]={0x12};
@@ -47,6 +53,8 @@ uint32_ta               u32m_BinFileByteCnt_readout = 0;
 
 
 uint32_ta              u32m_DataTransferIterator = 0;
+
+
 //###########################################################################
 void voSci_RequestIdentification();
 void voSci_InitiateUpgrade();
@@ -83,6 +91,11 @@ void voPrepare_ParseData(uint8_ta *p) {
 		u8ParseDataBuf[i] = *(p++);
 	}
 }
+
+void  voDownloadTimerTick()
+{
+	voTimerTick(mpSciDnldTick,mpSciDnldState);
+}
 //###########################################################################
 //Functions  : voSci_DownloadStart
 //Discription: Start to downloa
@@ -105,7 +118,9 @@ void voSci_DownloadStart(uint16_ta u16BoardId, uint16_ta device, uint16_ta ordin
 		u8m_SequenceNumber_Sci      = 0;
 		u32m_DataTransferIterator   = 0;
 	
+		voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
     voSci_RequestIdentification();  
+
 }
 //###########################################################################
 //Functions  : GetUpdatedBinFileSizeByByte
@@ -127,13 +142,13 @@ uint32_ta GetDataRetryCnt()
 //###########################################################################
 void voSci_RequestIdentification() {
 	  eDownloadSci_State = STATE_WAITING_FOR_IDENTIFICATION_RESPONSE;
-    voStartTimerMs(mpSciDnldTimer,500);                                               /// 100
+    voStartTimerMs(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,500);                                               /// 100
     pstrBinUpdateFuncApi->pFuncRequestIdentification(u16m_node_id);
 }
 
 void voSci_InitiateUpgrade(){
 	 eDownloadSci_State = STATE_WAITING_FOR_INITUPDATE_RESPONSE;
-   voStartTimerMs(mpSciDnldTimer,1*1000);   
+   voStartTimerMs(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,1*1000);   
    pstrBinUpdateFuncApi->pFuncInitUpgrade(u16m_node_id);
 }
 
@@ -213,7 +228,7 @@ void voSci_ToDoDataTranferX(eDownloadResult_t result) {
 				do {
 						 if (boIsBinfileHaveData() )  {  // if (boTestIshaveData) {
 								 u8DataChar = *((uint8_ta *)(*g_pBuffTemp) + j); // *pBuff = crcBuff
-							   u8DataChar = dataFake;
+							   //u8DataChar = dataFake;
 							   j++;
 								 pstrBinUpdateFuncApi->pFuncDataTranferPut(u8DataChar);
 						 }  else   {
@@ -229,13 +244,15 @@ void voSci_ToDoDataTranferX(eDownloadResult_t result) {
 						 
 				if (RESULT_CONTINUE == result) {
 					u32m_timeoutRetryCounter = 0;
-					voSetTimeoutTarget(mpSciDnldTimer,(i) * 25 + 500); //StartTimerMs( (i) * 25 + 500 );
+				//voSetTimeoutTarget(mpSciDnldTimer,mpSciDnldTick,(i) * 25 + 500); //StartTimerMs( (i) * 25 + 500 );
+					voStartTimerMs    (mpSciDnldTimer,mpSciDnldTick,mpSciDnldState, 500);
 				}
 			} 
 			else {  // file already sent out
 				eDownloadSci_State = STATE_WAITING_FOR_DATATRANSFER_FINISH_RESPONSE;
 				u32m_timeoutRetryCounter = 0;
-				voSetTimeoutTarget(mpSciDnldTimer,2000);
+		  //voSetTimeoutTarget(mpSciDnldTimer,mpSciDnldTick,2000);
+				voStartTimerMs    (mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,2000);
 				result = RESULT_CONTINUE;
 			}
 	 }
@@ -263,16 +280,17 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 						break;
 
 					case STATE_WAITING_FOR_IDENTIFICATION_RESPONSE: 
-						voStopTimer(mpSciDnldTimer);
+						voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
 					  voParseData(&u8Data);
 					  voSci_InitiateUpgrade();
-					
+					  
+						sSetRemoteBurnState((uint16_ta)cZonEnterBoot);
 						u16m_InitgradeRedoCnt = 0;
 						result = RESULT_START_UPGRADE;
 						break;
 
 					case STATE_WAITING_FOR_INITUPDATE_RESPONSE: 
-						voStopTimer(mpSciDnldTimer);
+						voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
 						voParseData(&u8Data); // mvoParseDATA(u8Data); // 1st is cmd
 					  if(u8Data != BOOTMSG_REQUEST_INITIATE_UPGRADE ) {
 							if(u16m_InitgradeRedoCnt++ > 5) {
@@ -301,16 +319,21 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 								default:                                  { result = RESULT_UPGRADE_RESPONSE_INVALID_STATUS;  } break;
 						}
 						voSci_ToDoDataTranferX(result);
+						
+						sSetRemoteBurnState((uint16_ta)cZonFwErasing);
 						eDownloadSci_State = STATE_WAITING_FOR_DATATRANSFER_RESPONSE;
 						break;
 
 					case STATE_WAITING_FOR_DATATRANSFER_RESPONSE:  
-						voStopTimer(mpSciDnldTimer);
+						voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
 						voParseData(&u8Data); // mvoParseDATA(u8Data); //ss.get( c );
+					
+						sSetRemoteBurnState((uint16_ta)cZonFwWriting);
 						if( u8Data != BOOTMSG_REQUEST_DATA_TRANSFER )  {
 							result = RESULT_UNEXPECTED_RESPONSE;
 							if(u8Data == BOOTMSG_REQUEST_DATA_TRANSFER_FINISH) {
 								voSci_DataTransferX_End();
+								sSetRemoteBurnState((uint16_ta)cZonAppCheck);
 								result = RESULT_DONE;
 							} else { // if(u8Data == BOOTMSG_REQUEST_DATA_TRANSFER_FINISH) 
 								u32m_NumberOfOutOfSyncRetries++;
@@ -337,12 +360,13 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 									}
 							}
 						}    //    2. if( u8Data != BOOTMSG_REQUEST_DATA_TRANSFER )  {
+
 						//---------------------------------------------------------------------------------
 						// TranferResponse(....)
 						break;
 
 					case STATE_WAITING_FOR_DATATRANSFER_FINISH_RESPONSE: 
-							voStopTimer(mpSciDnldTimer);
+							voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
 							voParseData(&u8Data); // mvoParseDATA(u8Data); // CanRead( ss, length, data );
 							if( u8Data != BOOTMSG_REQUEST_DATA_TRANSFER_FINISH )    {
 									result = RESULT_UNEXPECTED_RESPONSE;
@@ -379,14 +403,14 @@ void voDownloadMsgRsp_OnTimeout()
        uint16_ta  u32timeoutMaxRetries = 50;
        uint8_ta   u8SeqNo_Old;
 
-    if(! boIsTargetTimout(mpSciDnldTimer)) {
+    if(! boIsTargetTimout(mpSciDnldTimer,mpSciDnldTick)) {
         return;
     }
     if(STATE_WAITING_FOR_DATATRANSFER_RESPONSE == eDownloadSci_State) {
-       voSetTimeoutTarget(mpSciDnldTimer,5000);
+       voSetTimeoutTarget(mpSciDnldTimer,mpSciDnldTick,500); // 5000
     }
     else {
-       voSetTimeoutTarget(mpSciDnldTimer,2000);
+       voSetTimeoutTarget(mpSciDnldTimer,mpSciDnldTick,500); // 2000
     }
     switch (eDownloadSci_State)
     {
