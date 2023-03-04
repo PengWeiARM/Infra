@@ -15,7 +15,7 @@ extern "C" {
 
 void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, uint8_ta data[]);
 void voSci_DownloadStart(uint16_ta u16BoardId, uint16_ta device, uint16_ta ordinal, uint16_ta encryption, void *p);
-
+void voSci_SetAppSizeToLoader(uint32_ta u32size);
 // ##########################################################################################
 #ifdef __cplusplus
 }

@@ -13,6 +13,7 @@
 #include "BootProxy.h"
 #include "ProtocolData.h"
 #include "BootBasicApi.h"
+#include "Upgrade.h"
 //###########################################################################
 eUpdateFsm_t           em_UpdateFsm;
 unionCANopenMsg_t      uniCANOpenMsg;
@@ -48,6 +49,7 @@ bool_ta               boBinTimerRunState = false;
 __pDataReceived       pDataRecFunc = 0;
 __DownloadStart       pDownloadStartFunc = 0; 
 
+ void    SessionCallback_ResetBootState(uint16_ta nodeId);
  void    SessionCallback_RequestIdentification(uint16_ta nodeId);
  void    SessionCallback_InitiateUpgrade(uint16_ta nodeId);
  void    SessionCallback_DataTransferX(uint16_ta SeqNo);
@@ -156,6 +158,7 @@ void voBinUpdate_SetProtocolType(eProtclType_t type) {
 			pDataRecFunc       = voSci_DownloadMsg_DataReceived;
 			pDownloadStartFunc = voSci_DownloadStart;
 
+			gstrBinUpdateFuncApi.pFuncResetBootState            = SessionCallback_ResetBootState;
 			gstrBinUpdateFuncApi.pFuncRequestIdentification     = SessionCallback_RequestIdentification;
 			gstrBinUpdateFuncApi.pFuncInitUpgrade               = SessionCallback_InitiateUpgrade;		
 			gstrBinUpdateFuncApi.pFuncDataTranferX              = SessionCallback_DataTransferX;	
@@ -171,6 +174,7 @@ void voBinUpdate_SetProtocolType(eProtclType_t type) {
 			pDataRecFunc = 0;	
 			pDownloadStartFunc = 0;
 
+			gstrBinUpdateFuncApi.pFuncResetBootState            = 0;
 			gstrBinUpdateFuncApi.pFuncRequestIdentification     = 0;
 			gstrBinUpdateFuncApi.pFuncInitUpgrade               = 0;		
 			gstrBinUpdateFuncApi.pFuncDataTranferX              = 0;	
@@ -184,9 +188,12 @@ void voBinUpdate_SetProtocolType(eProtclType_t type) {
 }
 
 void voBinUpdate_StartSession() {
-	  //  if(m_pUpdateSession->isValid()) {
-	  if(1) {
-			  //m_pProtocolXc->xccleanRecvBuff();
+	  uint32_ta  sizeGot = 0;
+	  if(1) {                     //   if(m_pUpdateSession->isValid()) {
+			                          //   m_pProtocolXc->xccleanRecvBuff();
+			  sizeGot = sGetAppSize();            // init App Filesize to Loader
+			  voSci_SetAppSizeToLoader(sizeGot);
+			  sSetRemoteBurnProgress(0);           // init file program progress
 			
 			  voStopTimer(mpBinTimer, mpBinTimerClick,mpBinTimerState);
         em_UpdateFsm = eUpdateFSM_SetReset;  /// will goto CMD_Stayinboot in FSM()
@@ -329,9 +336,13 @@ void voBinUpdate_Handle_RecDataCallback(uint8_ta* p,uint16_ta len ,proDataItem_t
 }
 
 //###########################################################################
-//Functions  : SessionCallback_RequestIdentification()
+//Functions  : SessionCallback_XXXXX()
 //Discription: callback
 //###########################################################################
+void SessionCallback_ResetBootState(uint16_ta nodeId) { 
+		voSendOutCANOpenCmd_ResetBootState(nodeId);
+}
+
 void SessionCallback_RequestIdentification(uint16_ta nodeId) { 
 		voSendOutCANOpenCmd_RequestIdentification(nodeId);
 } 
@@ -353,6 +364,7 @@ void SessionCallback_SessionComplete(uint16_ta result) {
        bom_IsUpgradeSessionResultSuccess  = true;
 			 sSetRemoteBurnState((uint16_ta)cZonFwBurnPass);
 			 sSetRemoteBurnErrorCode(cZonInvalidErrCode);
+			 sSetRemoteBurnProgress(100);
     } else {
        bom_IsUpgradeSessionResultSuccess = false;
 			 sSetRemoteBurnState((uint16_ta)cZonFwBurnFail);

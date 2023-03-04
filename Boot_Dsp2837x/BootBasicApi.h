@@ -21,6 +21,8 @@ void    voSetTimeoutTarget (int32_ta* pTimer,int32_ta* p32tick,int32_ta ms);
 bool_ta boIsTargetTimout   (int32_ta* pTimer,int32_ta* p32tick);
 void    voStopTimer        (int32_ta* pTimer,int32_ta* p32tick,bool_ta* pstate);
 void    voStartTimerMs     (int32_ta* pTimer,int32_ta* p32tick,bool_ta* pstate, int32_ta ms);
+void voTimeIntervalSet(int32_ta interval);
+
 
 // ##########################################################################################
 
