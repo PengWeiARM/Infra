@@ -167,6 +167,7 @@ typedef struct
     u32 BinFileEndAddr;
     u32 FlashSectorSize;
     u32 AppAreaSize;
+    u32 BootVerAddr;
     void (*pFedDog)(void);
     void (*pReadByteData)(u32 addr, u16 len, u8* data);
     void (*pWriteWordDataWithCheck)(u32 addr, u16 len, u16* data);
@@ -223,6 +224,8 @@ void sResetUserUpgrade(void);
 bool sIsUserUpgardeSet(void);
 u32 sGetAppStartAddr(void);
 u32 sGetAppEndAddr(void);
+u32 sGetBootVerAddr(void);
+void sGetBootVer(FirmwareVer_t *pVer);
 bool sIsEraseAppAreaOk(void);
 bool sIsEraseAppPageOk(u32 addr);
 bool sIsWrAppAreaOk(u32 addr, u32 len);
