@@ -13,6 +13,7 @@
 #include "BootProxy.h"
 #include "ProtocolData.h"
 #include "BootBasicApi.h"
+#include "Upgrade.h"
 //###########################################################################
 eUpdateFsm_t           em_UpdateFsm;
 unionCANopenMsg_t      uniCANOpenMsg;
@@ -35,15 +36,20 @@ void 									*pu8Data   = 0;
 strBinUpdateFuncApi_t  gstrBinUpdateFuncApi;
 
 bool_ta               bom_IsUpgradeSessionResultSuccess = false;
-int32_ta							s32BinCntTimer = 1000;
 
+int32_ta							s32BinCntTimer   = 1000;
+int32_ta							s32BinTimerClick = 0;
+bool_ta               boBinTimerRunState = false;
 
 //###########################################################################
-#define mpBinTimer   (&s32BinCntTimer)
+#define mpBinTimer        (&s32BinCntTimer)
+#define mpBinTimerState   (&boBinTimerRunState)
+#define mpBinTimerClick   (&s32BinTimerClick)
 //###########################################################################
 __pDataReceived       pDataRecFunc = 0;
 __DownloadStart       pDownloadStartFunc = 0; 
 
+ void    SessionCallback_ResetBootState(uint16_ta nodeId);
  void    SessionCallback_RequestIdentification(uint16_ta nodeId);
  void    SessionCallback_InitiateUpgrade(uint16_ta nodeId);
  void    SessionCallback_DataTransferX(uint16_ta SeqNo);
@@ -65,6 +71,8 @@ uint16_ta u16GetOrdinityID();
 uint16_ta u16GetEncryptFlag();
 uint16_ta u16GetDeviceId();
 void      voGetBinFileSizeInByte(uint32_ta* pu32Size);
+
+void      voBinupdateTimerTick();
 //###########################################################################
 uint8_ta u8TargetchipAddr = 1;  // DSP
 uint8_ta u8SrcChipAddr    = 3;  // Display
@@ -134,6 +142,11 @@ void svoBinUpdate_Init()
 	voBinUpdate_SetProtocolType(eProtclType_Xc);
 	voSci_LowInit();
 }
+
+void  voBinupdateTimerTick()
+{
+	voTimerTick(mpBinTimerClick,mpBinTimerState);
+}
 //###########################################################################
 //Functions  : voBinUpdate_FSM()
 //Discription: Start to downloa
@@ -145,6 +158,7 @@ void voBinUpdate_SetProtocolType(eProtclType_t type) {
 			pDataRecFunc       = voSci_DownloadMsg_DataReceived;
 			pDownloadStartFunc = voSci_DownloadStart;
 
+			gstrBinUpdateFuncApi.pFuncResetBootState            = SessionCallback_ResetBootState;
 			gstrBinUpdateFuncApi.pFuncRequestIdentification     = SessionCallback_RequestIdentification;
 			gstrBinUpdateFuncApi.pFuncInitUpgrade               = SessionCallback_InitiateUpgrade;		
 			gstrBinUpdateFuncApi.pFuncDataTranferX              = SessionCallback_DataTransferX;	
@@ -160,6 +174,7 @@ void voBinUpdate_SetProtocolType(eProtclType_t type) {
 			pDataRecFunc = 0;	
 			pDownloadStartFunc = 0;
 
+			gstrBinUpdateFuncApi.pFuncResetBootState            = 0;
 			gstrBinUpdateFuncApi.pFuncRequestIdentification     = 0;
 			gstrBinUpdateFuncApi.pFuncInitUpgrade               = 0;		
 			gstrBinUpdateFuncApi.pFuncDataTranferX              = 0;	
@@ -173,14 +188,19 @@ void voBinUpdate_SetProtocolType(eProtclType_t type) {
 }
 
 void voBinUpdate_StartSession() {
-	  //  if(m_pUpdateSession->isValid()) {
-	  if(1) {
-			  //m_pProtocolXc->xccleanRecvBuff();
+	  uint32_ta  sizeGot = 0;
+	  if(1) {                     //   if(m_pUpdateSession->isValid()) {
+			                          //   m_pProtocolXc->xccleanRecvBuff();
+			  sizeGot = sGetAppSize();            // init App Filesize to Loader
+			  voSci_SetAppSizeToLoader(sizeGot);
+			  sSetRemoteBurnProgress(0);           // init file program progress
+			
+			  voStopTimer(mpBinTimer, mpBinTimerClick,mpBinTimerState);
         em_UpdateFsm = eUpdateFSM_SetReset;  /// will goto CMD_Stayinboot in FSM()
-				voSetTimeoutTarget(mpBinTimer,1*1000);
+				voStartTimerMs(mpBinTimer, mpBinTimerClick,mpBinTimerState, 1000);
 		}
 }
-//#define mpBinTimer   (&s32BinCntTimer)
+
 void voBinUpdate_FSM() {
 	
 		switch(em_UpdateFsm) {
@@ -189,24 +209,25 @@ void voBinUpdate_FSM() {
 				break;
 			
 			case eUpdateFSM_SetReset:
-				if(boIsTargetTimout(mpBinTimer)) {
-					voSetTimeoutTarget(mpBinTimer,1*1000);
+				if(boIsTargetTimout(mpBinTimer , mpBinTimerClick)) {
+					voSetTimeoutTarget(mpBinTimer, mpBinTimerClick, 1*1000);
 					voSendOutCANOpenCmd_Reset();
 					em_UpdateFsm = eUpdateFsm_StatyInboot;
+					u16updateLeaveBootMsgCnt = 0;
 				}
 				break;
 			
 			case eUpdateFsm_StatyInboot:
-				if(boIsTargetTimout(mpBinTimer)) {
-					voSetTimeoutTarget(mpBinTimer,1*1000);
+				if(boIsTargetTimout(mpBinTimer , mpBinTimerClick)) {
+					voSetTimeoutTarget(mpBinTimer, mpBinTimerClick, 1*1000);
 					voSendOutCANOpenCmd_StayInBOOT(true);
 					em_UpdateFsm = eUpdateFsm_Start;
 				}
 				break;
 			
 			case eUpdateFsm_Start:
-				if(boIsTargetTimout(mpBinTimer)) {
-					voSetTimeoutTarget(mpBinTimer,1*1000);
+				if(boIsTargetTimout(mpBinTimer , mpBinTimerClick)) {
+					voSetTimeoutTarget(mpBinTimer, mpBinTimerClick, 1*1000);
 					pu8Data = &u8DataTemp;
 					if((pDownloadStartFunc) &&(pu8Data) ) {
 					  pDownloadStartFunc(u16BoardId,u16device,u16ordinal,u16encryption,pu8Data);
@@ -217,23 +238,26 @@ void voBinUpdate_FSM() {
 						
 			
 			case eUpdateFsm_DataTransfer:
-				if(boIsTargetTimout(mpBinTimer)) { }
+				if(boIsTargetTimout(mpBinTimer , mpBinTimerClick)) { }
 				break;
 			
 			case eUpdateFsm_TranferFinsh:
-				if(boIsTargetTimout(mpBinTimer)) {
+				if(boIsTargetTimout(mpBinTimer , mpBinTimerClick)) {
+						voSetTimeoutTarget(mpBinTimer, mpBinTimerClick, 1*1000);
 					  if(u16updateLeaveBootMsgCnt++ < 3) {
                 voSendOutCANOpenCmd_StayInBOOT(false);
                 em_UpdateFsm = eUpdateFsm_TranferFinsh;
             } else {
+							  u16updateLeaveBootMsgCnt = 0;
                 em_UpdateFsm = eUpdateFsm_Standby;
                 boOneSessionFinishNotifyFlag = true;
+							  voStopTimer(mpBinTimer,mpBinTimerClick,mpBinTimerState);
             }
 				}
 				break;
 			
 			case eUpdateFsm_ErrToCreateSession:
-				if(boIsTargetTimout(mpBinTimer)) {
+				if(boIsTargetTimout(mpBinTimer , mpBinTimerClick)) {
 					em_UpdateFsm = eUpdateFsm_Standby;
 				}
 				break;	
@@ -312,9 +336,13 @@ void voBinUpdate_Handle_RecDataCallback(uint8_ta* p,uint16_ta len ,proDataItem_t
 }
 
 //###########################################################################
-//Functions  : SessionCallback_RequestIdentification()
+//Functions  : SessionCallback_XXXXX()
 //Discription: callback
 //###########################################################################
+void SessionCallback_ResetBootState(uint16_ta nodeId) { 
+		voSendOutCANOpenCmd_ResetBootState(nodeId);
+}
+
 void SessionCallback_RequestIdentification(uint16_ta nodeId) { 
 		voSendOutCANOpenCmd_RequestIdentification(nodeId);
 } 
@@ -334,8 +362,18 @@ void SessionCallback_DataTransferX_End() {
 void SessionCallback_SessionComplete(uint16_ta result) { 
     if(result == 2) { // RESULT_DONE = 2
        bom_IsUpgradeSessionResultSuccess  = true;
+			 sSetRemoteBurnState((uint16_ta)cZonFwBurnPass);
+			 sSetRemoteBurnErrorCode(cZonInvalidErrCode);
+			 sSetRemoteBurnProgress(100);
     } else {
        bom_IsUpgradeSessionResultSuccess = false;
+			 sSetRemoteBurnState((uint16_ta)cZonFwBurnFail);
+			// Set Error code
+			 if(result < RESULT_UPGRADE_RESPONSE_FLASH_WRITE_ERROR ) {
+				 sSetRemoteBurnErrorCode(cZonFwCheckFail);
+			 } else {
+				 sSetRemoteBurnErrorCode(cZonFwWriteFail);
+			 }
     }
     em_UpdateFsm = eUpdateFsm_TranferFinsh;
 } 

@@ -37,8 +37,14 @@ uint32_ta         u32m_TransferResponseIterator = 0;
 
 strBinUpdateFuncApi_t*  pstrBinUpdateFuncApi =  mNULL_ta;//&gstrBinUpdateFuncApi;
 
-int32_ta				     	  s32SciDownloadCntTimer = 1000;
+int32_ta				     	  s32SciDownloadCntTimer  = 1000;
+int32_ta				     	  s32SciDownloadTimerTick = 0;
+bool_ta                 boSciDownloadTimerState = 0;
+
 #define mpSciDnldTimer  &s32SciDownloadCntTimer
+#define mpSciDnldTick   &s32SciDownloadTimerTick
+#define mpSciDnldState   &boSciDownloadTimerState
+
 uint8_ta                u8ParseDataBuf[mParseBufSize+2] = {0};
 uint8_ta                u8ParseDatabufIndex = 0;
 uint8_ta                u8ArrayBinFile_Test[965]={0x12};
@@ -47,7 +53,10 @@ uint32_ta               u32m_BinFileByteCnt_readout = 0;
 
 
 uint32_ta              u32m_DataTransferIterator = 0;
+uint32_ta              u32_DspBinFileSizeGot     = 0;   // Get file from API of Arm provide.
+uint32_ta              u32ProgressPercent = 0;
 //###########################################################################
+void voSci_ResetBootState();
 void voSci_RequestIdentification();
 void voSci_InitiateUpgrade();
 void voSci_SessionComplete(eDownloadResult_t result);
@@ -64,7 +73,8 @@ void voPrepare_ParseData();
 //void voStartTimerMs(int32_ta interval);
 //void voStopTimer();	
 void voSci_LowInit();
-
+void      voSetAppSizeToLoader(uint32_ta u32size);
+uint32_ta u32Sci_GetAppSizeToLoader();
 //###########################################################################
 //
 //
@@ -82,6 +92,28 @@ void voPrepare_ParseData(uint8_ta *p) {
 	for(i=0;i<mParseBufSize;i++) {
 		u8ParseDataBuf[i] = *(p++);
 	}
+}
+
+void  voDownloadTimerTick()
+{
+	voTimerTick(mpSciDnldTick,mpSciDnldState);
+}
+//###########################################################################
+//Functions  : AppSizeToLoader
+//Discription: Set/Get Appsize to download
+//###########################################################################
+void voSci_SetAppSizeToLoader(uint32_ta u32size) {
+	
+//u32_DspBinFileSizeGot = u32size;
+	u32_DspBinFileSizeGot =  384LL*1024LL;
+	
+	if(u32_DspBinFileSizeGot < 512) {
+		u32_DspBinFileSizeGot =  512;
+	}
+}
+
+uint32_ta u32Sci_GetAppSizeToLoader() {
+	return u32_DspBinFileSizeGot ;
 }
 //###########################################################################
 //Functions  : voSci_DownloadStart
@@ -104,8 +136,12 @@ void voSci_DownloadStart(uint16_ta u16BoardId, uint16_ta device, uint16_ta ordin
 		u32m_BinFileByteCnt_readout = 0;
 		u8m_SequenceNumber_Sci      = 0;
 		u32m_DataTransferIterator   = 0;
+	  u32ProgressPercent          = 0;
 	
-    voSci_RequestIdentification();  
+		voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
+	  voSci_ResetBootState();  // Goto check boot state first ===> then : voSci_RequestIdentification();  
+    
+
 }
 //###########################################################################
 //Functions  : GetUpdatedBinFileSizeByByte
@@ -120,20 +156,29 @@ uint32_ta GetDataRetryCnt()
 {
     return u32m_DataTranferTotoal_RetryCnt;
 }
+//###########################################################################
+//Functions  : voSci_ResetBootState
+//Discription: Handle recieved Data
+//###########################################################################
+void voSci_ResetBootState() {
+		eDownloadSci_State = STATE_WAITING_FOR_RESET_BOOTSTATE_RESPONSE;
+    voStartTimerMs(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,1*1000);                                               /// 100
+    pstrBinUpdateFuncApi->pFuncResetBootState(u16m_node_id);
+}
 
 //###########################################################################
-//Functions  : voSci_DownloadMsg_DataReceived
+//Functions  : voSci_RequestIdentification
 //Discription: Handle recieved Data
 //###########################################################################
 void voSci_RequestIdentification() {
 	  eDownloadSci_State = STATE_WAITING_FOR_IDENTIFICATION_RESPONSE;
-    voStartTimerMs(mpSciDnldTimer,500);                                               /// 100
+    voStartTimerMs(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,500);                                               /// 100
     pstrBinUpdateFuncApi->pFuncRequestIdentification(u16m_node_id);
 }
 
 void voSci_InitiateUpgrade(){
 	 eDownloadSci_State = STATE_WAITING_FOR_INITUPDATE_RESPONSE;
-   voStartTimerMs(mpSciDnldTimer,1*1000);   
+   voStartTimerMs(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,1*1000);   
    pstrBinUpdateFuncApi->pFuncInitUpgrade(u16m_node_id);
 }
 
@@ -213,7 +258,7 @@ void voSci_ToDoDataTranferX(eDownloadResult_t result) {
 				do {
 						 if (boIsBinfileHaveData() )  {  // if (boTestIshaveData) {
 								 u8DataChar = *((uint8_ta *)(*g_pBuffTemp) + j); // *pBuff = crcBuff
-							   u8DataChar = dataFake;
+							   //u8DataChar = dataFake;
 							   j++;
 								 pstrBinUpdateFuncApi->pFuncDataTranferPut(u8DataChar);
 						 }  else   {
@@ -229,13 +274,15 @@ void voSci_ToDoDataTranferX(eDownloadResult_t result) {
 						 
 				if (RESULT_CONTINUE == result) {
 					u32m_timeoutRetryCounter = 0;
-					voSetTimeoutTarget(mpSciDnldTimer,(i) * 25 + 500); //StartTimerMs( (i) * 25 + 500 );
+				//voSetTimeoutTarget(mpSciDnldTimer,mpSciDnldTick,(i) * 25 + 500); //StartTimerMs( (i) * 25 + 500 );
+					voStartTimerMs    (mpSciDnldTimer,mpSciDnldTick,mpSciDnldState, 500);
 				}
 			} 
 			else {  // file already sent out
 				eDownloadSci_State = STATE_WAITING_FOR_DATATRANSFER_FINISH_RESPONSE;
 				u32m_timeoutRetryCounter = 0;
-				voSetTimeoutTarget(mpSciDnldTimer,2000);
+		  //voSetTimeoutTarget(mpSciDnldTimer,mpSciDnldTick,2000);
+				voStartTimerMs    (mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,2000);
 				result = RESULT_CONTINUE;
 			}
 	 }
@@ -250,6 +297,7 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 	   uint8_ta u8WindowSize    = 0;
 	   uint8_ta u8Data           = 0;
 		 uint8_ta u8Temp           = 0;
+
 	
 	  u16m_node_id = u16GetNodeId();
     if ( (canIdentifier & CAN_NODE_ID_MASK) != u16m_node_id )     {
@@ -261,27 +309,44 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 					case STATE_IDLE: 
 						result = RESULT_UNEXPECTED_RESPONSE;
 						break;
-
+					
+					case STATE_WAITING_FOR_RESET_BOOTSTATE_RESPONSE:   // ask to be reset to boot , then check if State is boot( = 0x22)
+						voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
+					  voParseData(&u8Data);
+					  if(u8Data == BOOTMSG_REQUEST_RESET_BOOTSTATE ) {  // check cmd : 0x05-BOOTMSG_REQUEST_RESET_BOOTSTATE
+							voParseData(&u8Data);
+							if(u8Data == CFirmwareRunningLayer_BOOT ) { // check if BootState is BOOT 
+								voSci_RequestIdentification();
+							}
+						}
+						// Not get wanted-resp, still timeout to resend
+						voStartTimerMs(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,500); 
+						result = RESULT_CONTINUE;
+						break;
+					
 					case STATE_WAITING_FOR_IDENTIFICATION_RESPONSE: 
-						voStopTimer(mpSciDnldTimer);
+						voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
 					  voParseData(&u8Data);
 					  voSci_InitiateUpgrade();
-					
+					  
+						sSetRemoteBurnState((uint16_ta)cZonEnterBoot);
 						u16m_InitgradeRedoCnt = 0;
 						result = RESULT_START_UPGRADE;
 						break;
 
 					case STATE_WAITING_FOR_INITUPDATE_RESPONSE: 
-						voStopTimer(mpSciDnldTimer);
+						voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
 						voParseData(&u8Data); // mvoParseDATA(u8Data); // 1st is cmd
 					  if(u8Data != BOOTMSG_REQUEST_INITIATE_UPGRADE ) {
 							if(u16m_InitgradeRedoCnt++ > 5) {
 								result = RESULT_UNEXPECTED_RESPONSE;
 								break;
-							}
+							}  else { // Not get wanted-resp, still timeout to resend
+									voStartTimerMs(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,500); 
+						  }
 						}
 						voParseData(&u8Data); // mvoParseDATA(u8Data);  // 2nd is window_size
-						if(u8Data ==0 ) {
+						if(u8Data == 0 ) {
 								result = RESULT_UPGRADE_RESPONSE_INVALID_WINDOW_SIZE;
 								break;
 						}
@@ -301,48 +366,63 @@ void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, ui
 								default:                                  { result = RESULT_UPGRADE_RESPONSE_INVALID_STATUS;  } break;
 						}
 						voSci_ToDoDataTranferX(result);
+						
+						sSetRemoteBurnState((uint16_ta)cZonFwErasing);
 						eDownloadSci_State = STATE_WAITING_FOR_DATATRANSFER_RESPONSE;
 						break;
 
 					case STATE_WAITING_FOR_DATATRANSFER_RESPONSE:  
-						voStopTimer(mpSciDnldTimer);
+						voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
 						voParseData(&u8Data); // mvoParseDATA(u8Data); //ss.get( c );
+					
+						sSetRemoteBurnState((uint16_ta)cZonFwWriting);
 						if( u8Data != BOOTMSG_REQUEST_DATA_TRANSFER )  {
 							result = RESULT_UNEXPECTED_RESPONSE;
 							if(u8Data == BOOTMSG_REQUEST_DATA_TRANSFER_FINISH) {
 								voSci_DataTransferX_End();
+								sSetRemoteBurnState((uint16_ta)cZonAppCheck);
 								result = RESULT_DONE;
 							} else { // if(u8Data == BOOTMSG_REQUEST_DATA_TRANSFER_FINISH) 
 								u32m_NumberOfOutOfSyncRetries++;
 								if (u32m_NumberOfOutOfSyncRetries < 20)   {  //MAX_OUT_OF_SYNC_RETRIES
 									result =  RESULT_CONTINUE;
+									// Not get wanted-resp, still timeout to resend
+									voStartTimerMs(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,500); 
 								}else {
 									result = RESULT_MAX_OUT_OF_SYNC_RETRIES_EXCEEDED;
 								}
 							}
 						} else {   // 1. if( u8Data != BOOTMSG_REQUEST_DATA_TRANSFER ) 
-								voParseData(&u8Data); // mvoParseDATA(u8Data); //ss.get( c );	
-							 u8Temp = (u8Data+1)&0xff;
-								if( u8Temp == u8m_SequenceNumber_Sci )  {
+							voParseData(&u8Data); // mvoParseDATA(u8Data); //ss.get( c );	
+							u8Temp = (u8Data+1)&0xff;
+							if( u8Temp == u8m_SequenceNumber_Sci )  {
 									u32m_TransferResponseIterator++;
 									u32m_NumberOfOutOfSyncRetries = 0;
 									voSci_ToDoDataTranferX(result);
+									u32ProgressPercent = (u32m_UpdatedBinFileSize_ByByte*100)/(u32Sci_GetAppSizeToLoader());
+									if( u32ProgressPercent > 100) {
+										u32ProgressPercent = 100;
+									}
+									sSetRemoteBurnProgress(u32ProgressPercent);           // init file program progress
 							}
 							else {
 									u32m_NumberOfOutOfSyncRetries++;
 									if (u32m_NumberOfOutOfSyncRetries < 20)   {  //MAX_OUT_OF_SYNC_RETRIES
 											result =  RESULT_CONTINUE;
-									}else {
+										  // Not get wanted-resp, still timeout to resend
+							        voStartTimerMs(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState,500); 
+									}else {																
 											result = RESULT_MAX_OUT_OF_SYNC_RETRIES_EXCEEDED;
 									}
 							}
 						}    //    2. if( u8Data != BOOTMSG_REQUEST_DATA_TRANSFER )  {
+
 						//---------------------------------------------------------------------------------
 						// TranferResponse(....)
 						break;
 
 					case STATE_WAITING_FOR_DATATRANSFER_FINISH_RESPONSE: 
-							voStopTimer(mpSciDnldTimer);
+							voStopTimer(mpSciDnldTimer,mpSciDnldTick,mpSciDnldState);
 							voParseData(&u8Data); // mvoParseDATA(u8Data); // CanRead( ss, length, data );
 							if( u8Data != BOOTMSG_REQUEST_DATA_TRANSFER_FINISH )    {
 									result = RESULT_UNEXPECTED_RESPONSE;
@@ -379,19 +459,28 @@ void voDownloadMsgRsp_OnTimeout()
        uint16_ta  u32timeoutMaxRetries = 50;
        uint8_ta   u8SeqNo_Old;
 
-    if(! boIsTargetTimout(mpSciDnldTimer)) {
+    if(! boIsTargetTimout(mpSciDnldTimer,mpSciDnldTick)) {
         return;
     }
     if(STATE_WAITING_FOR_DATATRANSFER_RESPONSE == eDownloadSci_State) {
-       voSetTimeoutTarget(mpSciDnldTimer,5000);
+       voSetTimeoutTarget(mpSciDnldTimer,mpSciDnldTick,500); // 5000
     }
     else {
-       voSetTimeoutTarget(mpSciDnldTimer,2000);
+       voSetTimeoutTarget(mpSciDnldTimer,mpSciDnldTick,500); // 2000
     }
     switch (eDownloadSci_State)
     {
 				case STATE_IDLE:      // nothing
 					break;
+				
+				case STATE_WAITING_FOR_RESET_BOOTSTATE_RESPONSE: 
+					  if (u32m_timeoutRetryCounter < u32timeoutMaxRetries)  {
+                u32m_timeoutRetryCounter++;
+                voSci_ResetBootState(); 
+            }  else   {
+                 voSci_SessionComplete( RESULT_UNEXPECTED_RESPONSE);
+            }
+					break;		
 				
 				case STATE_WAITING_FOR_IDENTIFICATION_RESPONSE: 
 					  if (u32m_timeoutRetryCounter < u32timeoutMaxRetries)  {

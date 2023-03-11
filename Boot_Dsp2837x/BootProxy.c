@@ -25,6 +25,7 @@ uint8_ta       u8isEncrypted = 0;
 void voSendOutCANOpenCmd_Reset();
 void voSendOutCANOpenCmd_StayInBOOT(bool_ta isStay);
 void voSendOutCANOpenCmd_InitiateUpgrade(uint16_ta nodeId);
+void voSendOutCANOpenCmd_ResetBootState(uint16_ta nodeId);
 void voSendOutCANOpenCmd_RequestIdentification(uint16_ta nodeId);
 void voSendOutCANOpenCmd_DataTranfer_XXL(uint16_ta nodeId,uint16_ta SeqNo,bool_ta isEnd);
 
@@ -36,12 +37,14 @@ void voSendOutCANOpenCmd_XcPut(uint8_ta data);
 void voSendBySciXc_Reset();
 void voSendBySciXc_StayInBOOT(bool_ta isStay);
 void voSendBySciXc_InitiateUpgrade(uint16_ta nodeId);
+void voSendBySciXc_ResetBootState(uint16_ta nodeId);
 void voSendBySciXc_RequestIdentification(uint16_ta nodeId);
 void voSendBySciXc_DataTranfer_XXL(uint16_ta nodeId,uint16_ta SeqNo,bool_ta isEnd);
 
 void voSendBySciQ_Reset();
 void voSendBySciQ_StayInBOOT(bool_ta isStay);
 void voSendBySciQ_InitiateUpgrade(uint16_ta nodeId);
+void voSendBySciQ_ResetBootState(uint16_ta nodeId);
 void voSendBySciQ_RequestIdentification(uint16_ta nodeId);
 void voSendBySciQ_DataTranfer_XXL(uint16_ta nodeId,uint16_ta SeqNo,bool_ta isEnd);
 
@@ -84,6 +87,14 @@ void voSendOutCANOpenCmd_InitiateUpgrade(uint16_ta nodeId) {
 		voSendBySciXc_InitiateUpgrade(nodeId);
 	}	
 } 
+
+void voSendOutCANOpenCmd_ResetBootState(uint16_ta nodeId) {
+		if( eProtclType_Xc == em_ProtcolType) {
+		  voSendBySciXc_ResetBootState(nodeId);
+	} else {
+		  voSendBySciXc_ResetBootState(nodeId);
+	}
+}
 
 void voSendOutCANOpenCmd_RequestIdentification(uint16_ta nodeId) { 
 	
@@ -332,6 +343,62 @@ void voSendBySciXc_InitiateUpgrade(uint16_ta nodeId) {
 								);
 } 
 
+void voSendBySciXc_ResetBootState(uint16_ta nodeId) {
+		    int i = 0; int nsize = 0; int len = 0;
+    int lenStart = 0;int dataLen_ExtendToBeEven = 0;
+    int lenFor16Bit =0;
+    uint8_ta *pDestAddr=0;
+    uint8_ta *pSrcAddr=0;
+    uint16_ta  u16CANId_Temp = 0;
+		uint8_ta   u8TargetChipAddr =0;
+		uint8_ta   u8SrcChipAddr =0;
+	
+    uint8_ta GetIdentificationMsg[8] = { BOOTMSG_REQUEST_RESET_BOOTSTATE/*0x01*/,0,0,0,  0,0,0,0 };  /* fix 8 byte for CANOPENoverSci */
+
+    stUpgraderCANOpen.uwTarget   = (0x00<<8) + 0x30;
+    stUpgraderCANOpen.uwCommand  = (0x00<<8) + progcmd_OverCanOpen_BOOTMSG_REQUEST_RESET_BOOTSTATE;
+    stUpgraderCANOpen.uwCANID_32 = (0x00<<8) + 0x00;
+
+    u16CANId_Temp = CAN_ID_PDO4_REQUEST | nodeId;     // to swap H-L.
+    stUpgraderCANOpen.uwCANID_16 = u16CANId_Temp;     //((u16CANId_Temp & 0xff)<<8) + ((u16CANId_Temp>>8) & 0xff);
+  //stUpgraderCANOpen.uwCANID_16 = CAN_ID_PDO4_REQUEST | nodeId;
+
+    stUpgraderCANOpen.uwCANDataLength = 0;
+
+    len       = 10;
+    lenStart  = len;
+    pDestAddr = (uint8_ta *)&stUpgraderCANOpen + len;
+    if(1) {   /// 1
+        pSrcAddr  = GetIdentificationMsg;
+        nsize     = sizeof(GetIdentificationMsg)/sizeof(uint8_ta);
+    }
+    dataLen_ExtendToBeEven = nsize;
+    if( dataLen_ExtendToBeEven % 2 ) {  /* odd for nsize */
+        dataLen_ExtendToBeEven = nsize + 1;
+    }
+
+    for(i = 0; i< dataLen_ExtendToBeEven;i++) {
+        *pDestAddr++ = *pSrcAddr++;
+        len++;
+    }
+    stUpgraderCANOpen.uwCANDataLength = len - lenStart - (dataLen_ExtendToBeEven - nsize);
+    lenFor16Bit = len/2;
+    stUpgraderCANOpen.uwCANDataLength = len - lenStart;
+		
+		 svoGetTargetChipAddr(&u8TargetChipAddr);
+		 svoGetSrcChipAddr   (&u8SrcChipAddr);
+     proSendSetCmdNoResp_16_Boot(
+										id_inner_sci,
+										u8TargetChipAddr,
+										u8SrcChipAddr,
+										db2_upgrader /* 0x10 */,         /* dataItem */
+										(uint16_ta*)&stUpgraderCANOpen, /* pdata    */
+										0,                              /* offset   */
+										lenFor16Bit                     /* len in 16 bit */
+									);
+}
+
+
 void voSendBySciXc_RequestIdentification(uint16_ta nodeId) { 
 	    int i = 0; int nsize = 0; int len = 0;
     int lenStart = 0;int dataLen_ExtendToBeEven = 0;
@@ -476,6 +543,9 @@ void voSendBySciQ_StayInBOOT(bool_ta isStay) {
 
 void voSendBySciQ_InitiateUpgrade(uint16_ta nodeId) { 
 } 
+
+void voSendBySciQ_ResetBootState(uint16_ta nodeId) {
+}
 
 void voSendBySciQ_RequestIdentification(uint16_ta nodeId) { 
 } 

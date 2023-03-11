@@ -14,6 +14,7 @@ typedef  void (*__func_void_Callback)(void) ;
 typedef  void (*__pDataReceived)     (uint32_ta canIdentifier, uint8_ta length, uint8_ta data[]);
 typedef  void (*__DownloadStart)     (uint16_ta u16BoardId, uint16_ta device, uint16_ta ordinal, uint16_ta encryption, void *p);
 ///########################################################################
+typedef   void (*__pCallback_ResetBootState)(uint16_ta nodeId);
 typedef   void (*__pCallback_RequestIdentification)(uint16_ta nodeId);
 typedef   void (*__pCallback_InitiateUpgrade)(uint16_ta nodeId);
 typedef   void (*__pCallback_DataTransferX)(uint16_ta SeqNo);
@@ -154,6 +155,7 @@ typedef union {
 } unionCANopenMsg_t;
 
 typedef struct {
+	__pCallback_ResetBootState         pFuncResetBootState;
 	__pCallback_RequestIdentification  pFuncRequestIdentification ;
 	__pCallback_InitiateUpgrade        pFuncInitUpgrade;
 	__pCallback_DataTransferX          pFuncDataTranferX;

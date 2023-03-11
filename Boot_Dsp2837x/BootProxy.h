@@ -15,6 +15,7 @@ extern "C" {
 void voSendOutCANOpenCmd_Reset();
 void voSendOutCANOpenCmd_StayInBOOT(bool_ta isStay);
 void voSendOutCANOpenCmd_InitiateUpgrade(uint16_ta nodeId);
+void voSendOutCANOpenCmd_ResetBootState(uint16_ta nodeId);
 void voSendOutCANOpenCmd_RequestIdentification(uint16_ta nodeId);
 void voSendOutCANOpenCmd_DataTranfer_XXL(uint16_ta nodeId,uint16_ta SeqNo,bool_ta isEnd);
 bool_ta boSendOutCANOpenCmd_StartWriteIn(uint16_ta len); 

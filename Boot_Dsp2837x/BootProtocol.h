@@ -7,6 +7,13 @@
 #ifndef BOOT_PROTOCOL_H
 #define BOOT_PROTOCOL_H
 
+#ifndef CFirmwareRunningLayer_APP
+#define CFirmwareRunningLayer_APP   0x11
+#endif
+
+#ifndef CFirmwareRunningLayer_BOOT
+#define CFirmwareRunningLayer_BOOT  0x22
+#endif
 
 /* Messages */
 /* Format REQuest:  <CMD-REQ> <placeholder> [<PARAM>...] */
@@ -20,6 +27,7 @@
 #define BOOTMSG_REQUEST_GET_VERSION                         (0x02)
 #define BOOTMSG_REQUEST_BOARDS_RESET                        (0x03)
 #define BOOTMSG_REQUEST_TRIGGER_WATCHDOG                    (0x04)
+#define BOOTMSG_REQUEST_RESET_BOOTSTATE                     (0x05)
 
 #define BOOTMSG_REQUEST_STAY_IN_BOOT                        (0x11)
 #define BOOTMSG_REQUEST_SET_POSITION_TRANSMITTER            (0x12)
