@@ -353,7 +353,7 @@ void voSendBySciXc_ResetBootState(uint16_ta nodeId) {
 		uint8_ta   u8TargetChipAddr =0;
 		uint8_ta   u8SrcChipAddr =0;
 	
-    uint8_ta GetIdentificationMsg[8] = { BOOTMSG_REQUEST_RESET_BOOTSTATE/*0x01*/,0,0,0,  0,0,0,0 };  /* fix 8 byte for CANOPENoverSci */
+    uint8_ta GetResetBootStateMsg[8] = { BOOTMSG_REQUEST_RESET_BOOTSTATE/*0x01*/,0,0,0,  0,0,0,0 };  /* fix 8 byte for CANOPENoverSci */
 
     stUpgraderCANOpen.uwTarget   = (0x00<<8) + 0x30;
     stUpgraderCANOpen.uwCommand  = (0x00<<8) + progcmd_OverCanOpen_BOOTMSG_REQUEST_RESET_BOOTSTATE;
@@ -369,8 +369,8 @@ void voSendBySciXc_ResetBootState(uint16_ta nodeId) {
     lenStart  = len;
     pDestAddr = (uint8_ta *)&stUpgraderCANOpen + len;
     if(1) {   /// 1
-        pSrcAddr  = GetIdentificationMsg;
-        nsize     = sizeof(GetIdentificationMsg)/sizeof(uint8_ta);
+        pSrcAddr  = GetResetBootStateMsg;
+        nsize     = sizeof(GetResetBootStateMsg)/sizeof(uint8_ta);
     }
     dataLen_ExtendToBeEven = nsize;
     if( dataLen_ExtendToBeEven % 2 ) {  /* odd for nsize */

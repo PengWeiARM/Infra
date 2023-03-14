@@ -202,26 +202,38 @@ void voBinUpdate_StartSession() {
 }
 
 void voBinUpdate_FSM() {
+	  static uint8_ta u8ResetCmd_resendCnt      = 0;
+      static uint8_ta u8StayInbootCmd_resendCnt = 0;
 	
 		switch(em_UpdateFsm) {
 
 			case eUpdateFsm_Standby:
+				u8ResetCmd_resendCnt      = 0;
+			    u8StayInbootCmd_resendCnt = 0;
 				break;
+
 			
 			case eUpdateFSM_SetReset:
 				if(boIsTargetTimout(mpBinTimer , mpBinTimerClick)) {
 					voSetTimeoutTarget(mpBinTimer, mpBinTimerClick, 1*1000);
 					voSendOutCANOpenCmd_Reset();
-					em_UpdateFsm = eUpdateFsm_StatyInboot;
+					if( u8ResetCmd_resendCnt++ >= 3) {
+						em_UpdateFsm = eUpdateFsm_StatyInboot;
+						u8ResetCmd_resendCnt = 0;
+					}
 					u16updateLeaveBootMsgCnt = 0;
 				}
 				break;
-			
+
+				
 			case eUpdateFsm_StatyInboot:
 				if(boIsTargetTimout(mpBinTimer , mpBinTimerClick)) {
 					voSetTimeoutTarget(mpBinTimer, mpBinTimerClick, 1*1000);
 					voSendOutCANOpenCmd_StayInBOOT(true);
-					em_UpdateFsm = eUpdateFsm_Start;
+					if( u8StayInbootCmd_resendCnt++ >= 1) {
+						em_UpdateFsm = eUpdateFsm_Start;
+						u8StayInbootCmd_resendCnt = 0;
+					}
 				}
 				break;
 			
