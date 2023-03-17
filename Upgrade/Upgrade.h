@@ -82,6 +82,11 @@ typedef enum
     cZonBinAppCheck,
     cZonBinFwMatchCheck,
     cZonEnterBoot,
+    cZonFwBootBurnIdle = 30,
+    cZonFwBootBurnPass,
+    cZonFwBootBurnFail,
+    cZonFwBootErasing,
+    cZonFwBootWriting,
 }UpgradeZonFwState_t;
 
 typedef enum
@@ -97,6 +102,8 @@ typedef enum
     cZonSetOkFlagFail,
     cZonEnterBootFail,
     cZonEraseCmdNack,
+    cZonFwBootEraseFail = 30,
+    cZonFwBootWriteFail,
     
     
 }UpgradeZonFwErrorCode_t;
@@ -168,6 +175,9 @@ typedef struct
     u32 FlashSectorSize;
     u32 AppAreaSize;
     u32 BootVerAddr;
+    u32 BootStartAddr;
+    u32 BootDataStartAddr;
+    u32 BootDataSize;
     void (*pFedDog)(void);
     void (*pReadByteData)(u32 addr, u16 len, u8* data);
     void (*pWriteWordDataWithCheck)(u32 addr, u16 len, u16* data);
@@ -225,6 +235,8 @@ bool sIsUserUpgardeSet(void);
 u32 sGetAppStartAddr(void);
 u32 sGetAppEndAddr(void);
 u32 sGetBootVerAddr(void);
+u32 sGetBootStartAddr(void);
+u32 sGetBootDataStartAddr(void);
 void sGetBootVer(FirmwareVer_t *pVer);
 bool sIsEraseAppAreaOk(void);
 bool sIsEraseAppPageOk(u32 addr);
@@ -237,6 +249,11 @@ bool IsCheckAppOkFlagClrOk(void);
 void sClrCheckAppOkFlag(void);
 bool sJumptoApplication(u32 AppAddr);
 bool sIsNeedCheckAppOk(void);
+bool sIsNeedBurnBoot(void);
+bool sIsHasBoot(void);
+bool sIsBurningBoot(void);
+void sBurnBoot(void);
+
 
 
 #endif
