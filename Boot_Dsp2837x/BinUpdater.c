@@ -122,6 +122,10 @@ uint16_ta u16GetDeviceId() {
 	return u16device;
 }
 
+eUpdateFsm_t eGetUpdateFsm(void) {
+	return em_UpdateFsm;
+}
+
 bool_ta boIsSessionFinished(void)
 {
     return boOneSessionFinishNotifyFlag;

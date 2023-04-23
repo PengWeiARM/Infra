@@ -43,7 +43,8 @@ uint16_ta u16GetEncryptFlag();
 uint16_ta u16GetDeviceId();
 bool_ta boIsSessionFinished(void);
 void voResetSessionEndFlag(void);
-void      voGetBinFileSizeInByte(uint32_ta* pu32Size);
+void voGetBinFileSizeInByte(uint32_ta* pu32Size);
+eUpdateFsm_t eGetUpdateFsm(void);
 // ##########################################################################################
 #ifdef __cplusplus
 }
