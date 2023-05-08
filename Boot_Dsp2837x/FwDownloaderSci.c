@@ -10,6 +10,7 @@
 //###########################################################################
 #include "FwDownloaderSci.h"
 #include "BootBasicApi.h"
+#include "BinUpdater.h"
 // #########################################################################
 #define mParseBufSize   8
 #define mvoParseDATA(x) {voParseData(&x);}
@@ -56,25 +57,23 @@ uint32_ta              u32m_DataTransferIterator = 0;
 uint32_ta              u32_DspBinFileSizeGot     = 0;   // Get file from API of Arm provide.
 uint32_ta              u32ProgressPercent = 0;
 //###########################################################################
-void voSci_ResetBootState();
-void voSci_RequestIdentification();
-void voSci_InitiateUpgrade();
+void voSci_ResetBootState(void);
+void voSci_RequestIdentification(void);
+void voSci_InitiateUpgrade(void);
 void voSci_SessionComplete(eDownloadResult_t result);
 void voSci_DataTransferX(uint16_ta SeqNo);
-void voSci_DataTransferX_End();
+void voSci_DataTransferX_End(void);
 
 bool_ta boSci_DataTransferStart(uint16_ta len);
 
 void voSci_DataTransferPut(uint8_ta data);
 void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, uint8_ta data[]);
-void voDownloadMsgRsp_OnTimeout() ;
 
-void voPrepare_ParseData();
+void voPrepare_ParseData(uint8_ta *p);
 //void voStartTimerMs(int32_ta interval);
 //void voStopTimer();	
-void voSci_LowInit();
 void      voSetAppSizeToLoader(uint32_ta u32size);
-uint32_ta u32Sci_GetAppSizeToLoader();
+uint32_ta u32Sci_GetAppSizeToLoader(void);
 //###########################################################################
 //
 //
@@ -294,10 +293,10 @@ void voSci_ToDoDataTranferX(eDownloadResult_t result) {
 void voSci_DownloadMsg_DataReceived(uint32_ta canIdentifier, uint8_ta length, uint8_ta data[]) 
 {
     eDownloadResult_t  result = RESULT_CONTINUE;
-	   uint8_ta u8WindowSize    = 0;
-	   uint8_ta u8Data           = 0;
-		 uint8_ta u8Temp           = 0;
-
+	uint8_ta u8WindowSize    = 0;
+	uint8_ta u8Data           = 0;
+	uint8_ta u8Temp           = 0;
+	u8WindowSize = u8WindowSize;//unused
 	
 	  u16m_node_id = u16GetNodeId();
     if ( (canIdentifier & CAN_NODE_ID_MASK) != u16m_node_id )     {

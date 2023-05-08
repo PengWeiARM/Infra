@@ -22,7 +22,7 @@ uint8_ta       u8DeviceID = 0;
 uint8_ta       u8ordinal = 0;
 uint8_ta       u8isEncrypted = 0;
 //###########################################################################
-void voSendOutCANOpenCmd_Reset();
+void voSendOutCANOpenCmd_Reset(void);
 void voSendOutCANOpenCmd_StayInBOOT(bool_ta isStay);
 void voSendOutCANOpenCmd_InitiateUpgrade(uint16_ta nodeId);
 void voSendOutCANOpenCmd_ResetBootState(uint16_ta nodeId);
@@ -31,17 +31,17 @@ void voSendOutCANOpenCmd_DataTranfer_XXL(uint16_ta nodeId,uint16_ta SeqNo,bool_t
 
 bool_ta boSendOutCANOpenCmd_StartWriteIn(uint16_ta len);
 void voSendOutCANOpenCmd_DataTranferPut(uint8_ta data);
-void voSendOutCANOpenCmd_ResetRxBuf();
+void voSendOutCANOpenCmd_ResetRxBuf(void);
 void voSendOutCANOpenCmd_XcPut(uint8_ta data);
 //###########################################################################
-void voSendBySciXc_Reset();
+void voSendBySciXc_Reset(void);
 void voSendBySciXc_StayInBOOT(bool_ta isStay);
 void voSendBySciXc_InitiateUpgrade(uint16_ta nodeId);
 void voSendBySciXc_ResetBootState(uint16_ta nodeId);
 void voSendBySciXc_RequestIdentification(uint16_ta nodeId);
 void voSendBySciXc_DataTranfer_XXL(uint16_ta nodeId,uint16_ta SeqNo,bool_ta isEnd);
 
-void voSendBySciQ_Reset();
+void voSendBySciQ_Reset(void);
 void voSendBySciQ_StayInBOOT(bool_ta isStay);
 void voSendBySciQ_InitiateUpgrade(uint16_ta nodeId);
 void voSendBySciQ_ResetBootState(uint16_ta nodeId);
@@ -231,7 +231,7 @@ void voSendBySciXc_StayInBOOT(bool_ta isStay) {
     stUpgraderCANOpen.uwCANID_32 = (0x00<<8) + 0x00;
 
     u16CANId_Temp = CAN_ID_PDO4_REQUEST | CAN_ID_BROADCAST; //to swap H-L.
-    stUpgraderCANOpen.uwCANID_16 = u16CANId_Temp;((u16CANId_Temp & 0xff)<<8) + ((u16CANId_Temp>>8) & 0xff);
+    stUpgraderCANOpen.uwCANID_16 = u16CANId_Temp; ///((u16CANId_Temp & 0xff)<<8) + ((u16CANId_Temp>>8) & 0xff);
     stUpgraderCANOpen.uwCANDataLength = 0;
 
     len       = 10;
@@ -455,18 +455,19 @@ void voSendBySciXc_RequestIdentification(uint16_ta nodeId) {
 } 
 
 void voSendBySciXc_DataTranfer_XXL(uint16_ta nodeId,uint16_ta SeqNo,bool_ta isEnd) { 
-	  int i = 0; int nsize = 0; int len = 0;
-    int lenStart = 0;int dataLen_ExtendToBeEven = 0;
+	int i = 0; int nsize = 0; int len = 0;
+    int lenStart = 0;
+	int dataLen_ExtendToBeEven = 0;
     int lenFor16Bit =0;
     uint8_ta *pDestAddr=0;
     uint8_ta *pSrcAddr=0;
     uint16_ta u16CANId_Temp = 0;
-		uint8_ta   u8TargetChipAddr =0;
-		uint8_ta   u8SrcChipAddr =0;
+	uint8_ta   u8TargetChipAddr =0;
+	uint8_ta   u8SrcChipAddr =0;
 	
     uint8_ta DataTransferXMsg[8] = { BOOTMSG_REQUEST_DATA_TRANSFER,       0,0,0,  0,0,0,0 };  /* fix 8 byte for CANOPENoverSci */
     uint8_ta TransferX_EndMsg[8] = { BOOTMSG_REQUEST_DATA_TRANSFER_FINISH,0,0,0,  0,0,0,0 };  /* fix 8 byte for CANOPENoverSci */
-
+	lenStart = lenStart;//unused
      nodeId = nodeId+0; /* node is set by Binupdate For DSP addr ,so just use member-variable */
      DataTransferXMsg[1] = SeqNo;
 

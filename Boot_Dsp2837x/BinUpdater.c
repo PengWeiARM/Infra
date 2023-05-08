@@ -53,26 +53,25 @@ __DownloadStart       pDownloadStartFunc = 0;
  void    SessionCallback_RequestIdentification(uint16_ta nodeId);
  void    SessionCallback_InitiateUpgrade(uint16_ta nodeId);
  void    SessionCallback_DataTransferX(uint16_ta SeqNo);
- void    SessionCallback_DataTransferX_End();
+ void    SessionCallback_DataTransferX_End(void);
  void    SessionCallback_SessionComplete(uint16_ta result);
 
  bool_ta SessionCallback_DataTransferStart(uint16_ta len);
  void    SessionCallback_DataTransferPut(uint8_ta data);
- void    SessionCallback_ToResetRxBuf();
+ void    SessionCallback_ToResetRxBuf(void);
  
 void      voBinUpdate_SetProtocolType(eProtclType_t type) ;
-bool_ta   voIsResetCmdGetRsp();
-void      voResetCmdGetRsp_SetFlag();
-void      voResetCmdGetRsp_SetFlag();
+bool_ta   voIsResetCmdGetRsp(void);
+void      voResetCmdGetRsp_SetFlag(void);
+void      voResetCmdGetRsp_SetFlag(void);
 
-uint16_ta u16GetNodeId();
-uint16_ta u16GetBoardId();
-uint16_ta u16GetOrdinityID();
-uint16_ta u16GetEncryptFlag();
-uint16_ta u16GetDeviceId();
+uint16_ta u16GetNodeId(void);
+uint16_ta u16GetBoardId(void);
+uint16_ta u16GetOrdinityID(void);
+uint16_ta u16GetEncryptFlag(void);
+uint16_ta u16GetDeviceId(void);
 void      voGetBinFileSizeInByte(uint32_ta* pu32Size);
 
-void      voBinupdateTimerTick();
 //###########################################################################
 uint8_ta u8TargetchipAddr = 1;  // DSP
 uint8_ta u8SrcChipAddr    = 3;  // Display

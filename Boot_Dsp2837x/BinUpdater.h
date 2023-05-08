@@ -29,22 +29,23 @@ typedef enum {
 
 extern unionCANopenMsg_t      uniCANOpenMsg;
 // ##########################################################################################
-void svoBinUpdate_Init(); 
-void voBinUpdate_FSM();
-void voBinUpdate_StartSession();
+void svoBinUpdate_Init(void); 
+void voBinUpdate_FSM(void);
+void voBinUpdate_StartSession(void);
 
 void svoGetTargetChipAddr(uint8_ta* pAddr);
 void svoGetSrcChipAddr(uint8_ta* pAddr);
 
-uint16_ta u16GetNodeId();
-uint16_ta u16GetBoardId();
-uint16_ta u16GetOrdinityID();
-uint16_ta u16GetEncryptFlag();
-uint16_ta u16GetDeviceId();
+uint16_ta u16GetNodeId(void);
+uint16_ta u16GetBoardId(void);
+uint16_ta u16GetOrdinityID(void);
+uint16_ta u16GetEncryptFlag(void);
+uint16_ta u16GetDeviceId(void);
 bool_ta boIsSessionFinished(void);
 void voResetSessionEndFlag(void);
 void voGetBinFileSizeInByte(uint32_ta* pu32Size);
 eUpdateFsm_t eGetUpdateFsm(void);
+void voBinupdateTimerTick(void);
 // ##########################################################################################
 #ifdef __cplusplus
 }
