@@ -34,7 +34,7 @@ void Put0612Asc(int x,int y,char *pData,int wLen,int Space);
 void Put0816Asc(int x,int y,char *pData,int wLen,bool wInv);
 void Put2232Asc(int x,int y,char *pData,int wLen,bool wInv);
 void PutHz(int x,int y ,char *pData,int wLen,bool wInv);
-void Put0816Asc(int x,int y,char *pData,int wLen,bool wInv);
+
 void ClearArea(int x1,int y1,int x2,int y2);
 void CloudDisp(int x,int y);
 void RainDisp(int x,int y);

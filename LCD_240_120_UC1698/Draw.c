@@ -216,6 +216,14 @@ void Put2232Asc(int x,int y,char *pData,int wLen,bool wInv)
 		{
 			PutPic(x,y,24,32,ASC2232[*pData-' '],wInv);
 		}
+		else if(*pData==0xC3)
+		{
+			pData++;
+			PutPic(x,y,24,32,ASC2232[*pData-' '],wInv);
+			wLen--;
+		}
+		else
+		{PutPic(x,y,24,32,ASC2232[0],FALSE);}
 		pData++;
 		x+=22;
 	}
@@ -231,6 +239,14 @@ void Put0816Asc(int x,int y,char *pData,int wLen,bool wInv)
 		{
 			PutPic(x,y,8,16,AscII[*pData-' '],wInv);
 		}
+		else if(*pData==0xC3)
+		{
+			pData++;
+			PutPic(x,y,8,16,AscII[*pData-' '],wInv);
+			wLen--;
+		}
+		else
+		{PutPic(x,y,8,16,AscII[0],wInv);}
 		pData++;
 		x+=8;
 	}
@@ -247,6 +263,14 @@ void Put0612Asc(int x,int y,char *pData,int wLen,int Space)
 		{
 			PutPic(x,y,6,12,ASC0612[*pData-' '],FALSE);
 		}
+		else if(*pData==0xC3)
+		{
+			pData++;
+			PutPic(x,y,6,12,ASC0612[*pData-' '],FALSE);
+			wLen--;
+		}
+		else
+		{PutPic(x,y,6,12,ASC0612[0],FALSE);}
 		pData++;
 		x+=(6+Space);
 	}
