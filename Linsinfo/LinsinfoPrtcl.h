@@ -19,7 +19,8 @@ enum LinsinfoCmd
 typedef struct
 {
     unsigned char uAddr;         //uint8_t
-    unsigned short uwHeader;     //uint16_t
+    unsigned char uHeader_8Hi; 
+    unsigned char uHeader_8Lo;
     char Channal;                //int8_t   bit0:6 Num; bit7(sign) Enable;
     unsigned char uData1Inte;    //uint8_t
     unsigned char uData1Deci;    //uint8_t
@@ -29,8 +30,10 @@ typedef struct
 typedef struct
 {
     unsigned char uAddr;        //uint8_t
-    unsigned short uwHeader;    //uint16_t
-    unsigned short uwLength;    //uint16_t
+    unsigned char uHeader_8Hi; 
+    unsigned char uHeader_8Lo;
+    unsigned char uLength_8Hi;
+    unsigned char uLength_8Lo;  
     unsigned char uCmd;         //uint8_t
     unsigned char uData[60];    //uint8_t  60byte
 } LinsinfoCmd_t;
@@ -42,7 +45,7 @@ typedef struct
 unsigned char uCheckArc(LinsinfoCmd_t *pData);
 LinsinfoCmd_t PackQueryArcState(unsigned char uAddr);
 LinsinfoDataI_t PackTransCurr1Ch(unsigned char uAddr,_Bool Enable,unsigned char uInte,unsigned char uDeci);
-
+LinsinfoCmd_t ResetAFCI(unsigned char uAddr);
 
 
 
