@@ -46,7 +46,8 @@ unsigned char uCheckArc(LinsinfoCmd_t *pData);
 LinsinfoCmd_t PackQueryArcState(unsigned char uAddr);
 LinsinfoDataI_t PackTransCurr1Ch(unsigned char uAddr,_Bool Enable,unsigned char uInte,unsigned char uDeci);
 LinsinfoCmd_t ResetAFCI(unsigned char uAddr);
-
+LinsinfoCmd_t DisableAFCI(unsigned char uAddr);
+LinsinfoCmd_t PackQueryInfo(unsigned char uAddr);
 
 
 #endif

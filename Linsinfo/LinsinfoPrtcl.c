@@ -83,6 +83,37 @@ LinsinfoCmd_t ResetAFCI(unsigned char uAddr)
 }
 
 
+/**
+ * @brief 
+ * @param uAddr 
+ * @return 
+ */
+LinsinfoCmd_t DisableAFCI(unsigned char uAddr)
+{
+    LinsinfoCmd_t ProBarLinsinfo;
+    ProBarLinsinfo.uAddr = uAddr;
+    ProBarLinsinfo.uHeader_8Hi = 0x55;
+    ProBarLinsinfo.uHeader_8Lo = 0x5A;
+    ProBarLinsinfo.uLength_8Hi = 0x00;
+    ProBarLinsinfo.uLength_8Lo = 0x01;
+    ProBarLinsinfo.uCmd = 0x22;
+
+    return ProBarLinsinfo;
+}
+
+LinsinfoCmd_t PackQueryInfo(unsigned char uAddr)
+{
+    LinsinfoCmd_t ProBarLinsinfo;
+    ProBarLinsinfo.uAddr = uAddr;
+    ProBarLinsinfo.uHeader_8Hi = 0x55;
+    ProBarLinsinfo.uHeader_8Lo = 0x5A;
+    ProBarLinsinfo.uLength_8Hi = 0x00;
+    ProBarLinsinfo.uLength_8Lo = 0x01;
+    ProBarLinsinfo.uCmd = 0x01;
+
+    return ProBarLinsinfo;
+}
+
 
 
 
