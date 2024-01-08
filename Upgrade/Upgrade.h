@@ -46,6 +46,7 @@ enum
     cWrBinData,
     cArmEnterBootloader,
     eBurnDsp,
+    eBurnBms,
 };
 
 enum 

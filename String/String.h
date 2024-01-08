@@ -19,6 +19,7 @@ s16 HexToAsc(long wData,char *bStr);
 s16 HexToStr(long wData,char *bStr,int wDot);
 s16 sStrcmp(char* p1, char* p2);
 void ToHexAsc(u8 data, char *bStr, LetterType_t type);
+void* my_memmove(void* dest, const void* src, u8 num);
 
 
 #endif

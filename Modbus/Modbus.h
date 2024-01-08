@@ -170,6 +170,7 @@ extern void sModbusEnableReceive(void);
 extern bool sModbusIsSendEnd(void);
 extern void sChkModbusComm(void);
 extern u16 sCalCrc(u8 *pData,u16 Lenghth);
+extern s16 sSearchAppReg(u16 addr, const modbusRegItem_t *pModbusReg, u16 num);
 
 
 #endif

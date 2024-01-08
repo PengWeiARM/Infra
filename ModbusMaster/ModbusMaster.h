@@ -1,5 +1,7 @@
 #ifndef ModbusMaster_H
 #define ModbusMaster_H
+#include "Modbus.h"
+
 
 
 
@@ -29,9 +31,13 @@ typedef struct
     void (*pEnableReceiveSwich)(void);
     u16 RegStartAddr;
     u16 RegEndAddr;
-    //const modbusRegItem_t *pModbusReg;
+    const modbusRegItem_t *pModbusReg;
     u16 RegNum;
     void (*pUartSend)(u8 data);
+	bool (*pAppIsBusy)(void);
+	void (*pWaitSomeTime)(void);
+	u16 waitingTime;
+	u16 Overtime;
 }ModbusMasterInit_t;
 
 typedef enum{
@@ -43,22 +49,30 @@ typedef enum{
 	eResponseOK,
 }ModbusMasterResult_t;
 
+typedef struct
+{
+    u16 Index;
+	bool ParseIndex;
+	bool ReceiveIndex;
+    u8  Buffer[2][cModbusMasterRxSizeMax];
+}ModbusMasterRx_t;
+
 
 void sModbusMasterInit(ModbusMasterInit_t *pInit);
 void sModbusMasterEnableSend(void);
-void sModbusMasterReceiveData(u8 Data);
-void sModbusMasterSendData(void);
+extern void sModbusMasterReceiveData(void);
+extern void sModbusMasterSendData(void);
 
 void sChkModbusMasterComm(void);
 void sModbusMasterClrRxBuffer(void);
-u8 sGetModbusSlaveAddr(void);
-u8 sGetModbusSlaveFunCode(void);
-u8 sGetSentSlaveAddr(void);
-u8 sGetSentFunCode(void);
+extern u8 sGetModbusSlaveAddr(void);
+extern u8 sGetModbusSlaveFunCode(void);
+extern u8 sGetSendSlaveAddr(void);
+extern u8 sGetSendFunCode(void);
 void sModbusMasterSendCmd(u8 addr, u8 FunCode, u16 RegAddr, u16 RegLenth, u16 *pData);
-ModbusMasterResult_t sModbusMasterParse(void);
+extern ModbusMasterResult_t sModbusMasterParse(void);
 
 
-
+extern ModbusMasterRx_t stModbusMasterRx;
 		
 #endif

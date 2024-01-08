@@ -1,5 +1,6 @@
 #include "string.h"
-
+#include <assert.h>
+#include "stdio.h"
 s16 sStrCopy(char *pSor,char *pDim)
 {
 	s16 wLen=0;
@@ -265,6 +266,26 @@ s16 sStrcmp(char* p1, char* p2) {
 	}
 	return 0;
 }
+
+void* my_memmove(void* dest, const void* src, u8 num) {
+	assert(dest && src);
+	void* ret = dest;
+	if (dest < src) {
+		for (int i = 0; i < num; i++) {
+			*((u16*)dest) = *((u16*)src);
+			(u16*)src = (u16*)src + 1;
+			(u16*)dest = (u16*)dest + 1;
+		}
+	}//这种情况用原来的函数就可以，直接复制粘贴
+	else {
+		while (num--) {
+			*((u16*)dest + num) = *((u16*)src + num);
+		}
+		//让他+num 然后我们只需num--就能实现从后往前的复制
+	}
+	return ret;
+}
+
 
 
 
