@@ -67,7 +67,8 @@ struct
 struct
 {
     u32 size;
-    u32 crc;    
+    u32 crc;
+	u32 BmsCrc;
 }stBinApp;
 
 BinFile_t stBinFileProp;
@@ -83,7 +84,7 @@ u32 RxBinWordSize;
 
 #define cCrcTabLenth (256)
 u32 crc_table[cCrcTabLenth];
-#define cCrcBuffLenth (1024)
+//#define cCrcBuffLenth (1024)
 u8 crcBuff[cCrcBuffLenth];
 
 bool bReqUpgrade = FALSE;
@@ -350,6 +351,8 @@ void sRdBinAppCrc(void)
     stBinApp.crc = sRdDoubleWodData(cAppDataCrcOffset);
 }
 
+
+
 u32 sGetAppSize(void)
 {
     return stBinApp.size;
@@ -527,6 +530,94 @@ u32 sCalBinDataCrc32(u32 addr, u32 len)
     CRC_from_calculation_Out  = CRC_from_calculation;
     CRC_from_calculation_Out ^= 0xffffffffL;
     return CRC_from_calculation_Out;
+}
+
+const u16 sBmsCRCTalbe[] = {
+    0x0000, 0xCC01, 0xD801, 0x1400, 0xF001, 0x3C00, 0x2800, 0xE401, 
+    0xA001, 0x6C00, 0x7800, 0xB401, 0x5000, 0x9C01, 0x8801, 0x4400, 
+ };
+
+u16 sBMS_CRC16_Calc(u8 *ptr, u16 Count)
+{
+	u16 wCRC  = 0XFFFF;
+    u8  chChar = 0;
+    u16 i = 0;
+    
+    
+	for (i = 0; i < Count; i++)
+	{
+		chChar = *ptr++;
+		wCRC = sBmsCRCTalbe[(chChar ^ wCRC) & 0x0F] ^ (wCRC >> 4);
+		wCRC = sBmsCRCTalbe[((chChar >> 4) ^ wCRC) & 0x0F] ^ (wCRC >> 4);
+	}
+	wCRC = (wCRC >> 8)|(wCRC << 8);
+	return wCRC;
+}
+
+
+u16 sBMS_CRC32_Calc(u16 crc,u8 *ptr, u16 Count)
+{
+	u16 wCRC  = crc;
+    u8  chChar = 0;
+    u16 i = 0;
+	
+	for (i = 0; i < Count; i++)
+	{
+		chChar = *ptr++;
+		wCRC = sBmsCRCTalbe[(chChar ^ wCRC) & 0x0F] ^ (wCRC >> 4);
+		wCRC = sBmsCRCTalbe[((chChar >> 4) ^ wCRC) & 0x0F] ^ (wCRC >> 4);
+	}
+	//wCRC = (wCRC >> 8)|(wCRC << 8);
+	return wCRC;
+}
+
+
+u32 sCalBmsBinDataCrc32(u32 addr, u32 len)
+{
+	u16 CRC_from_calculation = 0;
+    u32 CRC_from_calculation_Out = 0;
+    u32 realLen;
+	
+    if(addr%2 != 0) return 0;
+    if(len%2 != 0) return 0;
+    
+    CRC_from_calculation     = 0xffff;
+    if(len > cCrcBuffLenth)
+    {
+        realLen = cCrcBuffLenth;
+    }
+    else
+    {
+        realLen = len;
+    }
+
+    while(len > 0)
+    {   
+        pApp->pFedDog();
+        len -= realLen;
+        pReadByteData(addr, realLen, crcBuff);
+        CRC_from_calculation = sBMS_CRC32_Calc( CRC_from_calculation, crcBuff, realLen);
+        addr += realLen;		
+       
+        if(len > cCrcBuffLenth)
+        {
+            realLen = cCrcBuffLenth;
+        }
+        else
+        {
+            realLen = len;
+        }
+    }
+	//CRC_from_calculation = (CRC_from_calculation >> 8)|(CRC_from_calculation << 8);
+    CRC_from_calculation_Out  = CRC_from_calculation;
+    //CRC_from_calculation_Out ^= 0xffffffffL;
+    return CRC_from_calculation_Out;
+}
+
+u32 sGetBmsAppCrc(void)
+{
+	stBinApp.BmsCrc = sCalBmsBinDataCrc32(pApp->BinFileStartAddr + cAppFieldOffset, stBinApp.size);//ÖØÐÂ¼ÆËã
+    return stBinApp.BmsCrc;
 }
 
 bool sHeaderCheckIsOk(void)

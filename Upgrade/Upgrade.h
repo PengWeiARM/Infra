@@ -4,6 +4,7 @@
 #include "typedef.h"
 #include "main.h"
 
+#define cCrcBuffLenth (1024)
 
 enum 
 {
@@ -254,6 +255,9 @@ bool sIsNeedBurnBoot(void);
 bool sIsHasBoot(void);
 bool sIsBurningBoot(void);
 void sBurnBoot(void);
+extern u16 sBMS_CRC16_Calc(u8 *ptr, u16 Count);
+//extern u32 sGetBMSAppCrc(u32 addr, u32 len);
+extern u32 sGetBmsAppCrc(void);
 
 
 
