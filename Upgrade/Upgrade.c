@@ -28,6 +28,8 @@
 #define cNoNeedBurnBootFlag  0xFFFFFFFFFFFFFFFF
 #define cNeedBurnBootFlag   (0x55aa55aa55aa55aa)
 
+#define CHECK_APP_OK 1
+#define BURN_BOOT 1
 
 static void (*pReadByteData)(u32 addr, u16 len, u8* data);
 static void (*pWriteWordDataWithCheck)(u32 addr, u16 len, u16* data);
@@ -477,14 +479,27 @@ bool sFilePropCheckIsOk(void)
     {
         for(i=0; i<pApp->ownInfor.PaceBms.chipNum; i++)
         {
-            if(stRemoteUpgrade.BinFile.chip == pApp->ownInfor.PaceBms.chip[i]) break;
+            if(stRemoteUpgrade.BinFile.chip == pApp->ownInfor.PaceBms.chip[i]) 
+            {
+                break;
+            }
+          /*  if (stRemoteUpgrade.BinFile.chip == WEB_BINFILE_CHIP)
+            {
+                break;
+            }*/
         }
         if(i>=pApp->ownInfor.PaceBms.chipNum) return FALSE;
     }    
     
     if(stRemoteUpgrade.BinFile.model != stBinFileProp.model) return FALSE;
     if(stRemoteUpgrade.BinFile.FirmwareType != stBinFileProp.FirmwareType) return FALSE;
-    if(stRemoteUpgrade.BinFile.chip != stBinFileProp.chip) return FALSE;
+    if (stRemoteUpgrade.BinFile.chip != stBinFileProp.chip) 
+    {
+        if (stRemoteUpgrade.BinFile.chip != WEB_BINFILE_CHIP)
+        {
+            return FALSE;
+        }
+    }
     if(stRemoteUpgrade.BinFile.FirmwareVer.Ver.major != stBinFileProp.FirmwareVer.Ver.major) return FALSE;
     if(stRemoteUpgrade.BinFile.FirmwareVer.Ver.minor != stBinFileProp.FirmwareVer.Ver.minor) return FALSE;
     if(stRemoteUpgrade.BinFile.FirmwareVer.Branch != stBinFileProp.FirmwareVer.Branch) return FALSE;
@@ -698,7 +713,14 @@ bool sWrFileDataIsOK(void)
     {
         for(i=0; i<pApp->ownInfor.PaceBms.chipNum; i++)
         {
-            if(stUpgradeData.chip == pApp->ownInfor.PaceBms.chip[i]) break;
+            if(stUpgradeData.chip == pApp->ownInfor.PaceBms.chip[i]) 
+            {
+                break;
+            }
+         /*   if (stUpgradeData.chip == WEB_UPGRADEDATA_CHIP)
+            {
+                break;
+            }*/
         }
         if(i>=pApp->ownInfor.PaceBms.chipNum) return FALSE;
     }    

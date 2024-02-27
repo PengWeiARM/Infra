@@ -17,6 +17,7 @@
 #include "ModbusMaster.h"
 #include "string.h"
 #include "Protocol.h"
+#include "PaceBms.h"
 
 typedef struct
 {
@@ -141,6 +142,7 @@ void sModbusMasterReceiveData(void)
 	
     if(RxIsSuspended) return;
     RxTimeOutCnt = 0;
+	stCommCB.commFail = FALSE;
     //ÅÐ¶ÏÊÇ·ñÔ½½ç
     if (stModbusMasterRx.Index >= cModbusMasterRxSizeMax)
     {
@@ -222,7 +224,7 @@ u8 sGetSendFunCode(void)
 
 static void sParse0304ReadReponse(void)
 {
-	static u32 RX_CNT = 0;
+	
     u16 Temp_RegAddr = stModbusMasterSendSlaveInfo.ModbusMasterSendRegAddr;
 	u16 Temp_Len = stModbusMasterSendSlaveInfo.ModbusMasterSendRegNum;
 	u16 Temp_EndAddr = Temp_RegAddr + Temp_Len -1;
@@ -239,12 +241,12 @@ static void sParse0304ReadReponse(void)
 	*pTmp = Temp_Data;
 		Temp_index += 2;
 	}
-		RX_CNT++;
+	//stCommCB.commFail = FALSE;
 }
 
 void sModbusMasterSendCmd(u8 addr, u8 FunCode, u16 RegAddr, u16 RegLenth, u16 *pData)
 {
-	static u32 TX_CNT = 0;
+	
     u16 Crc;
     stModbusMasterTx.Buffer[0] = addr;
     stModbusMasterSendSlaveInfo.ModbusMasterSendSlaveAddr = addr;
@@ -287,7 +289,7 @@ void sModbusMasterSendCmd(u8 addr, u8 FunCode, u16 RegAddr, u16 RegLenth, u16 *p
     stModbusMasterTx.Length = stModbusMasterTx.Index;
     stModbusMasterTx.Index = 0;
     sModbusMasterSendData();
-	TX_CNT++;
+	            stCommCB.commFail = TRUE;
 }
 
 
@@ -323,7 +325,10 @@ ModbusMasterResult_t sModbusMasterParse(void)
         default:
             return eFunCodeError;
     }
-    if(ubChksumIdx+1 >= cModbusMasterRxSizeMax) return eBuffOverflow;
+    if(ubChksumIdx+1 >= cModbusMasterRxSizeMax)
+    	{
+		return eBuffOverflow;
+    	}
 
     Crc =((u16)stModbusMasterRx.Buffer[stModbusMasterRx.ParseIndex][ubChksumIdx+1] << 8) + (stModbusMasterRx.Buffer[stModbusMasterRx.ParseIndex][ubChksumIdx]);
     

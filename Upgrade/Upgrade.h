@@ -27,6 +27,8 @@ enum
     cPaceBmsChip = 1,
 };
 
+#define WEB_BINFILE_CHIP 1
+#define WEB_UPGRADEDATA_CHIP 0
 		
 enum 
 {
