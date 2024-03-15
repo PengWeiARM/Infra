@@ -269,6 +269,18 @@ void Put0612Asc(int x,int y,char *pData,int wLen,int Space)
 			PutPic(x,y,6,12,ASC0612[*pData-' '],FALSE);
 			wLen--;
 		}
+		else if(*pData==0xE0)
+		{
+			pData++;
+			if(*pData==0xb8)
+			{
+				pData++;
+				if(*pData==0x89)
+				{}
+			}
+			PutPic(x,y,6,12,ASC0612[*pData-' '],FALSE);
+			wLen--;
+		}
 		else
 		{PutPic(x,y,6,12,ASC0612[0],FALSE);}
 		pData++;

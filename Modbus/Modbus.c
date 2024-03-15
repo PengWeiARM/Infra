@@ -15,8 +15,8 @@
 //******************************************************************************
 //*                 the local variable define
 //******************************************************************************
-static modbusrx_t stModbusRx;
-static modbustx_t stModbusTx;
+modbusrx_t stModbusRx;
+modbustx_t stModbusTx;
 
 static modbusInit_t *pApp;
 static u16 RxTimeOutCnt;

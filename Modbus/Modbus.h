@@ -157,6 +157,8 @@ typedef enum
 //*                 the  global variable declarations
 //******************************************************************************
 
+extern modbusrx_t stModbusRx;
+extern modbustx_t stModbusTx;
 
 
 //******************************************************************************
