@@ -267,23 +267,51 @@ s16 sStrcmp(char* p1, char* p2) {
 	return 0;
 }
 
-void* my_memmove(void* dest, const void* src, u8 num) {
-	assert(dest && src);
-	void* ret = dest;
-	if (dest < src) {
-		for (int i = 0; i < num; i++) {
-			*((u16*)dest) = *((u16*)src);
-			(u16*)src = (u16*)src + 1;
-			(u16*)dest = (u16*)dest + 1;
+//模拟实现my_memmove()函数
+ 
+void* my_memmove(void* destination, const void* source, int num)
+{
+	assert(destination);        //防止源头或目的地指针为NULL
+	assert(source);
+	void* ret = destination;
+	if (source < destination)   //内存中数据的存储是由低地址到高地址的
+	{
+		//从后向前拷贝
+		while (num--)   //以num为20为例,在num进入while循环之后,就立刻--,变成19了
+		{
+			*((char*)destination + num ) = *((char*)source + num );
+			//这时source+num刚好指向的是源头内存块的最后一个字节
 		}
-	}//这种情况用原来的函数就可以，直接复制粘贴
-	else {
-		while (num--) {
-			*((u16*)dest + num) = *((u16*)src + num);
+	}
+	else
+	{
+		while (num--)
+		{
+			//从前向后拷贝
+			*((char*)destination) = *((char*)source);
+			++((char*)destination);        
+			++((char*)source);
+			//这里使用后置++的话一定要给(char*)destination整体带上括号
+			//否则后置++的优先级比(char*)的强制类型转换的优先级高,
+			//导致指针类型还是void*时就进行++操作,这是在C标准中是不允许的
 		}
-		//让他+num 然后我们只需num--就能实现从后往前的复制
 	}
 	return ret;
+}
+
+
+//memset函数
+void* my_memset(void* ptr, int value, int num)
+{
+	//参数有效性检查
+	assert(ptr != NULL);
+	char* tptr = (char*)ptr;
+	//初始化内存
+	while (num-- != 0)
+	{
+		*tptr++ = value;
+	}
+	return ptr;
 }
 
 
